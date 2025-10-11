@@ -1,22 +1,22 @@
 # Hệ Thống Đề Xuất Lộ Trình Học Tập Cá Nhân Hóa Dựa Trên Đồ Thị Tri Thức và Mô Hình Ngôn Ngữ Lớn
 
-Dự án nghiên cứu và xây dựng một hệ thống mẫu (prototype) nhằm đề xuất các lộ trình học tập được cá nhân hóa, dựa trên sự kết hợp giữa **Đồ Thị Tri Thức (Knowledge Graph - KG)** và **Mô Hình Ngôn Ngữ Lớn (Large Language Model - LLM)**. [cite_start]Hệ thống hướng đến việc cung cấp trải nghiệm học tập linh hoạt, thích ứng với trình độ, mục tiêu và phong cách học của từng cá nhân, giải quyết những hạn chế của các nền tảng học tập trực tuyến hiện tại[cite: 443, 444, 445, 446].
+Dự án nghiên cứu và xây dựng một hệ thống mẫu (prototype) nhằm đề xuất các lộ trình học tập được cá nhân hóa, dựa trên sự kết hợp giữa **Đồ Thị Tri Thức (Knowledge Graph - KG)** và **Mô Hình Ngôn Ngữ Lớn (Large Language Model - LLM)**. Hệ thống hướng đến việc cung cấp trải nghiệm học tập linh hoạt, thích ứng với trình độ, mục tiêu và phong cách học của từng cá nhân, giải quyết những hạn chế của các nền tảng học tập trực tuyến hiện tại.
 
 ---
 
 ## 🚀 Các Tính Năng Chính
 
-* [cite_start]**Biểu Diễn Tri Thức Bằng Đồ Thị:** Sử dụng đồ thị tri thức (KG) được xây dựng trên **Neo4j** để mô hình hóa các khái niệm giáo dục và mối quan hệ phức tạp giữa chúng (như `REQUIRES`, `NEXT`, `IS_SUBCONCEPT_OF`)[cite: 476, 532].
-* [cite_start]**Tương Tác Bằng Ngôn Ngữ Tự Nhiên:** Tận dụng sức mạnh của **Mô hình Ngôn ngữ Lớn (LLM)** và **LlamaIndex** để hiểu các yêu cầu học tập của người dùng (ví dụ: "Tôi muốn học SQL cơ bản") và chuyển chúng thành các truy vấn trên đồ thị[cite: 483, 484].
-* [cite_start]**Tạo Lộ Trình Tối Ưu:** Áp dụng thuật toán **A\*** tùy chỉnh để tìm kiếm và tạo ra các lộ trình học tập tối ưu, logic và phù hợp nhất với hồ sơ của từng học viên[cite: 538, 1457].
-* [cite_start]**Sinh Nội Dung Cá Nhân Hóa:** Tự động tạo ra nội dung bài giảng và bài kiểm tra trắc nghiệm được cá nhân hóa theo phong cách học tập (VARK), trình độ và mục tiêu của người học[cite: 852, 1059].
-* [cite_start]**Quy Trình Dữ Liệu Tự Động:** Giới thiệu quy trình tiền xử lý dữ liệu tự động hóa bằng cách sử dụng các bộ prompt `SPR Generator` và `SPR Validation` để trích xuất và chuẩn hóa kiến thức từ tài liệu gốc[cite: 541].
+* **Biểu Diễn Tri Thức Bằng Đồ Thị:** Sử dụng đồ thị tri thức (KG) được xây dựng trên **Neo4j** để mô hình hóa các khái niệm giáo dục và mối quan hệ phức tạp giữa chúng (như `REQUIRES`, `NEXT`, `IS_SUBCONCEPT_OF`).
+* **Tương Tác Bằng Ngôn Ngữ Tự Nhiên:** Tận dụng sức mạnh của **Mô hình Ngôn ngữ Lớn (LLM)** và **LlamaIndex** để hiểu các yêu cầu học tập của người dùng (ví dụ: "Tôi muốn học SQL cơ bản") và chuyển chúng thành các truy vấn trên đồ thị.
+* **Tạo Lộ Trình Tối Ưu:** Áp dụng thuật toán **A\*** tùy chỉnh để tìm kiếm và tạo ra các lộ trình học tập tối ưu, logic và phù hợp nhất với hồ sơ của từng học viên[cite: 538, 1457].
+* **Sinh Nội Dung Cá Nhân Hóa:** Tự động tạo ra nội dung bài giảng và bài kiểm tra trắc nghiệm được cá nhân hóa theo phong cách học tập (VARK), trình độ và mục tiêu của người học.
+* **Quy Trình Dữ Liệu Tự Động:** Giới thiệu quy trình tiền xử lý dữ liệu tự động hóa bằng cách sử dụng các bộ prompt `SPR Generator` và `SPR Validation` để trích xuất và chuẩn hóa kiến thức từ tài liệu gốc.
 
 ---
 
 ## 🏛️ Kiến Trúc Hệ Thống
 
-[cite_start]Kiến trúc tổng thể của hệ thống được thiết kế theo mô hình 3 lớp và được minh họa chi tiết bằng **mô hình C4**, giúp làm rõ sự tương tác giữa các thành phần từ cấp độ tổng quan (Context) đến chi tiết (Component)[cite: 489, 987, 988].
+[cite_start]Kiến trúc tổng thể của hệ thống được thiết kế theo mô hình 3 lớp và được minh họa chi tiết bằng **mô hình C4**, giúp làm rõ sự tương tác giữa các thành phần từ cấp độ tổng quan (Context) đến chi tiết (Component).
 
 * **Tầng Giao Diện Người Dùng (UI Layer):** Giao diện dòng lệnh (và Streamlit trong tương lai) để người dùng tương tác.
 * **Tầng Xử Lý Logic (Logic Layer):** "Bộ não" của hệ thống, được viết bằng **Python**, chứa các module xử lý yêu cầu, tạo lộ trình (thuật toán A\*), và sinh nội dung (gọi API LLM).
@@ -123,14 +123,14 @@ Chương trình sẽ khởi động và bắt đầu hỏi bạn các thông tin
 
 ## 🔄 Quy Trình Xử Lý Dữ Liệu
 
-[cite_start]Hệ thống hoạt động qua 2 giai đoạn chính[cite: 459]:
+Hệ thống hoạt động qua 2 giai đoạn chính:
 
-1.  [cite_start]**Giai đoạn 1: Tiền Xử Lý & Xây Dựng Knowledge Graph [cite: 460]**
-    * [cite_start]**Trích xuất Dữ liệu:** Sử dụng prompt `SPR Generator` [cite: 10] [cite_start]để LLM đọc một tài liệu học thuật (PDF, DOCX) và tự động trích xuất các khái niệm, thuộc tính, mối quan hệ thành 2 file `nodes.csv` và `relationships.csv`[cite: 11, 12].
-    * [cite_start]**Xác thực Dữ liệu:** Sử dụng prompt `SPR Validation` [cite: 2069] [cite_start]để một phiên LLM khác kiểm tra chéo, sửa lỗi, và chuẩn hóa dữ liệu đã trích xuất, đảm bảo chất lượng và tính nhất quán cho đồ thị tri thức[cite: 2070].
+1.  **Giai đoạn 1: Tiền Xử Lý & Xây Dựng Knowledge Graph**
+    * **Trích xuất Dữ liệu:** Sử dụng prompt `SPR Generator`để LLM đọc một tài liệu học thuật (PDF, DOCX) và tự động trích xuất các khái niệm, thuộc tính, mối quan hệ thành 2 file `nodes.csv` và `relationships.csv`.
+    * **Xác thực Dữ liệu:** Sử dụng prompt `SPR Validation`để một phiên LLM khác kiểm tra chéo, sửa lỗi, và chuẩn hóa dữ liệu đã trích xuất, đảm bảo chất lượng và tính nhất quán cho đồ thị tri thức.
     * **Tải vào Neo4j:** Dữ liệu đã được xác thực sẽ được tải vào Neo4j để hình thành đồ thị tri thức hoàn chỉnh.
 
-2.  [cite_start]**Giai đoạn 2: Vận Hành Hệ Thống Đề Xuất [cite: 461]**
+2.  **Giai đoạn 2: Vận Hành Hệ Thống Đề Xuất **
     * Hệ thống tương tác với người dùng để lấy thông tin đầu vào.
     * `path_generator.py` sẽ phân tích yêu cầu, tìm điểm đầu/cuối và chạy thuật toán A* để tạo lộ trình.
     * `content_generator.py` sẽ tạo nội dung học tập và bài kiểm tra cho từng bước.
@@ -140,7 +140,7 @@ Chương trình sẽ khởi động và bắt đầu hỏi bạn các thông tin
 
 ## 📈 Hướng Phát Triển
 
-* [cite_start]**Nâng cao chất lượng KG:** Xây dựng cơ chế cho phép chuyên gia kiểm duyệt và tinh chỉnh đồ thị tri thức[cite: 1962].
-* [cite_start]**Xây dựng Giao diện người dùng:** Phát triển giao diện web thân thiện bằng **Streamlit** để nâng cao trải nghiệm người dùng[cite: 1963].
-* [cite_start]**Tối ưu hóa LLM:** Thử nghiệm với các mô hình nhỏ hơn (distilled models) hoặc các kỹ thuật caching để giảm chi phí và độ trễ[cite: 1961].
-* [cite_start]**Nghiên cứu dài hạn:** Thực hiện các thử nghiệm với người dùng thực tế để đánh giá tác động của hệ thống đến kết quả học tập[cite: 1960].
+* **Nâng cao chất lượng KG:** Xây dựng cơ chế cho phép chuyên gia kiểm duyệt và tinh chỉnh đồ thị tri thức.
+* **Xây dựng Giao diện người dùng:** Phát triển giao diện web thân thiện bằng **Streamlit** để nâng cao trải nghiệm người dùng.
+* **Tối ưu hóa LLM:** Thử nghiệm với các mô hình nhỏ hơn (distilled models) hoặc các kỹ thuật caching để giảm chi phí và độ trễ.
+* **Nghiên cứu dài hạn:** Thực hiện các thử nghiệm với người dùng thực tế để đánh giá tác động của hệ thống đến kết quả học tập.
