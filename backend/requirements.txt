@@ -1,0 +1,16 @@
+python-dotenv
+neo4j
+llama-index
+llama-index-graph-stores-neo4j
+llama-index-llms-openai
+llama-index-vector-stores-neo4jvector
+openai
+pandas
+numpy
+scikit-learn
+mlxtend
+nltk
+nest_asyncio
+fastapi
+uvicorn[standard]
+python-multipart

@@ -1,0 +1,4 @@
+"Document_ID","Source_Node_ID","Relationship_Type","Target_Node_ID","Weight","Dependency"
+"MSSQL-Data-Aggregation","concept:aggregate_functions","REQUIRES","concept:grouping","5","5"
+"MSSQL-Data-Aggregation","concept:having_clause","REQUIRES","concept:aggregate_functions","5","5"
+"MSSQL-Data-Aggregation","concept:having_clause","REQUIRES","concept:grouping","4","4"

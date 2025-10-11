@@ -1,0 +1,6 @@
+MATCH path = (start:KnowledgeNode)-[:NEXT|IS_SUBCONCEPT_OF|IS_PREREQUISITE_OF|SIMILAR_TO|HAS_ALTERNATIVE_PATH*1..]->(end:KnowledgeNode)
+WHERE NOT (end)-[:NEXT|IS_SUBCONCEPT_OF|IS_PREREQUISITE_OF]->()
+AND NOT ()-[:REQUIRES|REMEDIATES]->(end)
+WITH end.Node_ID AS leaf_Node_ID, length(path) AS path_length
+RETURN DISTINCT leaf_Node_ID, MAX(path_length) AS max_steps
+ORDER BY max_steps DESC

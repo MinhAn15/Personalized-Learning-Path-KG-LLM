@@ -1,0 +1,8 @@
+"Document_ID","Source_Node_ID","Relationship_Type","Target_Node_ID","Weight","Dependency"
+"BI_Lecture_5","concept:data_warehouse","REQUIRES","concept:database_systems","5","5"
+"BI_Lecture_5","concept:etl","REQUIRES","concept:data_integration","4","4"
+"BI_Lecture_5","concept:olap","REQUIRES","concept:data_warehouse","3","3"
+"BI_Lecture_5","concept:scd","REQUIRES","concept:dimension_modeling","4","4"
+"BI_Lecture_5","concept:etl","NEXT","concept:olap","2","1"
+"BI_Lecture_5","concept:data_warehouse","SIMILAR_TO","concept:operational_data_store","2","1"
+"BI_Lecture_5","concept:scd","IS_SUBCONCEPT_OF","concept:data_warehouse","3","2"

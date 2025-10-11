@@ -1,0 +1,8 @@
+"Document_ID","Source_Node_ID","Relationship_Type","Target_Node_ID","Weight","Dependency"
+"MSSQL-Data-Definition-And-Datatypes","lesson:database_modeling","REQUIRES","concept:data_types_in_sql_server","5","5"
+"MSSQL-Data-Definition-And-Datatypes","lesson:basic_sql_queries","REQUIRES","lesson:database_modeling","4","4"
+"MSSQL-Data-Definition-And-Datatypes","lesson:table_customization","REQUIRES","lesson:basic_sql_queries","4","4"
+"MSSQL-Data-Definition-And-Datatypes","lesson:deleting_data_and_structures","REQUIRES","lesson:table_customization","3","3"
+"MSSQL-Data-Definition-And-Datatypes","lesson:database_modeling","NEXT","lesson:basic_sql_queries","3","2"
+"MSSQL-Data-Definition-And-Datatypes","lesson:basic_sql_queries","NEXT","lesson:table_customization","3","2"
+"MSSQL-Data-Definition-And-Datatypes","lesson:table_customization","NEXT","lesson:deleting_data_and_structures","3","2"

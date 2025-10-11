@@ -1,0 +1,2 @@
+MATCH path = (start:KnowledgeNode {Node_ID: 'concept:data_mining'})-[:NEXT|REQUIRES|IS_SUBCONCEPT_OF|IS_PREREQUISITE_OF*0..3]-(related:KnowledgeNode)
+RETURN start, relationships(path) AS rels, related, path

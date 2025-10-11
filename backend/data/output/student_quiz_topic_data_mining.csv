@@ -1,0 +1,19 @@
+Question_Number,Question_Text,Option_1,Option_2,Option_3,Option_4,Level,Student_Answer
+1,Data mining là quá trình gì?,Khám phá mẫu và kiến thức từ lượng lớn dữ liệu,Xử lý dữ liệu,Lưu trữ dữ liệu,Phân tích dữ liệu,basic,Khám phá mẫu và kiến thức từ lượng lớn dữ liệu
+2,"Phân loại, phân cụm, và quy tắc kết hợp là ví dụ của gì trong data mining?","Classification, clustering, association rules","Regression, forecasting, optimization","Sampling, summarization, visualization","Data cleaning, data integration, data transformation",basic,"Classification, clustering, association rules"
+3,Mục tiêu học tập của data mining là gì?,Hiểu các kỹ thuật cơ bản trong data mining,Xử lý dữ liệu lớn,Tạo ra dữ liệu mới,Phân tích dữ liệu cũ,basic,Hiểu các kỹ thuật cơ bản trong data mining
+4,Data mining được áp dụng trong lĩnh vực nào?,Business intelligence,Social media,Entertainment,Healthcare,basic,Business intelligence
+5,Data mining là một phần của khái niệm nào?,Business intelligence,Big data,Data analytics,Data visualization,basic,Business intelligence
+6,Data mining là quá trình khám phá mẫu và kiến thức từ lượng lớn dữ liệu. Đúng hay sai?,Đúng,Sai,Không đủ thông tin để kết luận,Cả hai đều đúng,intermediate,Đúng
+7,Phân loại dữ liệu là một ví dụ của kỹ thuật nào trong data mining?,Classification,Clustering,Association rules,Regression,intermediate,Classification
+8,Data mining giúp doanh nghiệp làm gì?,Khám phá thông tin từ dữ liệu,Tạo ra dữ liệu mới,Lưu trữ dữ liệu,Phân tích dữ liệu cũ,intermediate,Khám phá thông tin từ dữ liệu
+9,Data mining được sử dụng để phân tích dữ liệu từ nguồn nào?,Large amounts of data,Small amounts of data,Structured data only,Unstructured data only,intermediate,Large amounts of data
+10,Data mining là quá trình phân tích dữ liệu từ nguồn dữ liệu nào?,Large amounts of data,Small amounts of data,Structured data only,Unstructured data only,intermediate,Large amounts of data
+11,Data mining là một phần của lĩnh vực nào?,Business intelligence,Data science,Machine learning,Artificial intelligence,advanced,Business intelligence
+12,Phân tích dữ liệu từ lượng lớn dữ liệu là mục tiêu của kỹ thuật nào trong data mining?,Data mining,Data cleaning,Data integration,Data transformation,advanced,Data mining
+13,Data mining giúp doanh nghiệp làm gì?,Khám phá thông tin từ dữ liệu,Tạo ra dữ liệu mới,Lưu trữ dữ liệu,Phân tích dữ liệu cũ,advanced,Khám phá thông tin từ dữ liệu
+14,Data mining được áp dụng trong lĩnh vực nào?,Business intelligence,Social media,Entertainment,Healthcare,advanced,Business intelligence
+15,Data mining là quá trình khám phá mẫu và kiến thức từ lượng lớn dữ liệu. Đúng hay sai?,Đúng,Sai,Không đủ thông tin để kết luận,Cả hai đều đúng,advanced,Đúng
+16,Data mining là một phần của khái niệm nào?,Business intelligence,Big data,Data analytics,Data visualization,advanced,Business intelligence
+17,Data mining giúp doanh nghiệp làm gì?,Khám phá thông tin từ dữ liệu,Tạo ra dữ liệu mới,Lưu trữ dữ liệu,Phân tích dữ liệu cũ,advanced,Khám phá thông tin từ dữ liệu
+18,Data mining được áp dụng trong lĩnh vực nào?,Business intelligence,Social media,Entertainment,Healthcare,advanced,Business intelligence

@@ -1,0 +1,6 @@
+StudentID,Learning_History,Current_Level,Performance_Details,Learning_Style_Preference,Preferred_Difficulty,Time_Availability,Long_Term_Goal,LastUpdated
+stu001,"concept:mean;concept:boxplots",50,"concept:mean:85:25;concept:boxplots:75:30","visual","STANDARD",60,"master_data_visualization","2023-11-01T09:00:00"
+stu002,"concept:quartiles;concept:interquartile_range",60,"concept:quartiles:80:20;concept:interquartile_range:90:25","auditory","ADVANCED",90,"expert_in_statistics","2023-11-01T10:00:00"
+stu003,"concept:data_visualization;concept:bar_charts",55,"concept:data_visualization:70:30;concept:bar_charts:85:20","reading_writing","STANDARD",45,"understand_bi_tasks","2023-11-01T11:00:00"
+stu004,"concept:classification;concept:decision_trees",70,"concept:classification:90:35;concept:decision_trees:80:30","kinesthetic","ADVANCED",120,"master_machine_learning","2023-11-01T12:00:00"
+stu005,"",0,"","visual","STANDARD",60,"learn_basic_statistics","2023-11-01T13:00:00"

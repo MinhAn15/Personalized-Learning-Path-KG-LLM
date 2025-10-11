@@ -1,0 +1,6 @@
+ MATCH path = (start:KnowledgeNode)-[:NEXT|REQUIRES|IS_SUBCONCEPT_OF|IS_PREREQUISITE_OF*2..]->(end:KnowledgeNode)
+WHERE NOT ()-[:NEXT|IS_PREREQUISITE_OF|IS_SUBCONCEPT_OF]->(start)
+AND NOT (start)-[:REQUIRES]->() 
+AND NOT (end)-[:NEXT|IS_SUBCONCEPT_OF|IS_PREREQUISITE_OF]->()
+AND NOT ()-[:REQUIRES]->(end)
+RETURN avg(length(path)) AS avg_depth, min(length(path)) AS min_depth, max(length(path)) AS max_depth, count(path) AS path_count

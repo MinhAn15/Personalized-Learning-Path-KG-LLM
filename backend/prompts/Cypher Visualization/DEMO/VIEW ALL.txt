@@ -1,0 +1,12 @@
+// Tìm mối quan hệ đi ra từ concept:fundamental_of_visualization
+MATCH path_out = (start:KnowledgeNode {Node_ID: 'topic:business_intelligence'})-[:NEXT|REQUIRES|IS_SUBCONCEPT_OF|IS_PREREQUISITE_OF|SIMILAR_TO|HAS_ALTERNATIVE_PATH|REMEDIATES*0..]->(related_out:KnowledgeNode)
+// Tìm mối quan hệ đi vào concept:fundamental_of_visualization
+MATCH path_in = (related_in:KnowledgeNode)-[:NEXT|REQUIRES|IS_SUBCONCEPT_OF|IS_PREREQUISITE_OF|SIMILAR_TO|HAS_ALTERNATIVE_PATH|REMEDIATES*0..]->(start:KnowledgeNode {Node_ID: 'topic:business_intelligence'})
+// Kết hợp cả hai loại mối quan hệ
+RETURN start, 
+       coalesce(relationships(path_out), []) AS rels_out, 
+       related_out,
+       coalesce(relationships(path_in), []) AS rels_in, 
+       related_in
+
+

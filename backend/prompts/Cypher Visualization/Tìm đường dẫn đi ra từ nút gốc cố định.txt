@@ -1,0 +1,10 @@
+MATCH path = (start:KnowledgeNode {Node_ID: 'concept:fundamental_of_visualization'})-[:NEXT|REQUIRES|IS_SUBCONCEPT_OF|IS_PREREQUISITE_OF*1..3]->(related:KnowledgeNode)
+RETURN start, relationships(path) AS rels, related, path
+
+
+
+MATCH path = (start:KnowledgeNode)-[:NEXT|REQUIRES|IS_SUBCONCEPT_OF|IS_PREREQUISITE_OF|SIMILAR_TO|REMEDIATES|HAS_ALTERNATIVE_PATH*1..]->(end:KnowledgeNode)
+WHERE NOT ()-[:NEXT|IS_PREREQUISITE_OF|IS_SUBCONCEPT_OF]->(start)
+WITH start.Node_ID AS root_Node_ID, length(path) AS path_length
+RETURN DISTINCT root_Node_ID, MAX(path_length) AS max_steps
+ORDER BY max_steps DESC

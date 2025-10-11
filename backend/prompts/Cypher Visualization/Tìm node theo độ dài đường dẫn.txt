@@ -1,0 +1,9 @@
+MATCH path = (start:KnowledgeNode)-[:NEXT|REQUIRES|IS_SUBCONCEPT_OF|IS_PREREQUISITE_OF*2..]->(end:KnowledgeNode)
+WHERE NOT ()-[:NEXT|IS_PREREQUISITE_OF|IS_SUBCONCEPT_OF]->(start)
+AND NOT (start)-[:REQUIRES]->()
+AND NOT (end)-[:NEXT|IS_SUBCONCEPT_OF|IS_PREREQUISITE_OF]->()
+AND NOT ()-[:REQUIRES]->(end)
+WITH start, length(path) AS path_length
+WHERE path_length >= 4
+RETURN start, path_length
+ORDER BY path_length ASC

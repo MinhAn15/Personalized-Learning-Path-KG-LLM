@@ -1,0 +1,5 @@
+"Document_ID","Source_Node_ID","Relationship_Type","Target_Node_ID","Weight","Dependency"
+"IT_Infrastructure_and_Emerging_Technologies","concept:cloud_computing","REQUIRES","concept:it_infrastructure","5","5"
+"IT_Infrastructure_and_Emerging_Technologies","concept:virtualization","REQUIRES","concept:it_infrastructure","4","4"
+"IT_Infrastructure_and_Emerging_Technologies","concept:service_oriented_architecture","REQUIRES","concept:it_infrastructure","3","3"
+"IT_Infrastructure_and_Emerging_Technologies","concept:moores_law","IS_PREREQUISITE_OF","concept:it_infrastructure","3","3"
