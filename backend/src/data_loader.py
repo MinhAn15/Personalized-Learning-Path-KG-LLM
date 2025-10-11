@@ -84,7 +84,9 @@ def _get_github_file_content(file_path: str) -> str:
     """
     Fetches the content of a file from a private GitHub repository.
     """
-    if not Config.GITHUB_TOKEN:
+    # GITHUB_TOKEN is provided as a module-level variable in config.py
+    from . import config as _config_module
+    if not getattr(_config_module, 'GITHUB_TOKEN', None):
         raise ValueError("GITHUB_TOKEN is not set in the environment.")
 
     # Assumes the repo is the one this code is running in.
@@ -95,7 +97,7 @@ def _get_github_file_content(file_path: str) -> str:
     url = f"https://api.github.com/repos/{owner}/{repo}/contents/{file_path}"
     
     headers = {
-        "Authorization": f"token {Config.GITHUB_TOKEN}",
+        "Authorization": f"token {_config_module.GITHUB_TOKEN}",
         "Accept": "application/vnd.github.v3.raw"
     }
     
@@ -113,12 +115,24 @@ def check_and_load_kg(driver: GraphDatabase.driver) -> Dict:
     """
     logger.info("Bắt đầu quá trình tải Knowledge Graph từ GitHub...")
     try:
-        # Fetch file content from GitHub
+        # Fetch file content from GitHub; if 404 or fail, fallback to local files in backend/data/github_import
         logger.info("Đang tải nodes.csv từ GitHub...")
-        nodes_csv_content = _get_github_file_content(f"backend/data/github_import/{Config.IMPORT_NODES_FILE}")
-        
+        try:
+            nodes_csv_content = _get_github_file_content(f"backend/data/github_import/{Config.IMPORT_NODES_FILE}")
+        except Exception as e:
+            logger.warning(f"Không thể fetch nodes từ GitHub: {e}. Thử đọc file local...")
+            local_nodes_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'github_import', Config.IMPORT_NODES_FILE)
+            with open(local_nodes_path, 'r', encoding='utf-8') as f:
+                nodes_csv_content = f.read()
+
         logger.info("Đang tải relationships.csv từ GitHub...")
-        rels_csv_content = _get_github_file_content(f"backend/data/github_import/{Config.IMPORT_RELATIONSHIPS_FILE}")
+        try:
+            rels_csv_content = _get_github_file_content(f"backend/data/github_import/{Config.IMPORT_RELATIONSHIPS_FILE}")
+        except Exception as e:
+            logger.warning(f"Không thể fetch relationships từ GitHub: {e}. Thử đọc file local...")
+            local_rels_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'github_import', Config.IMPORT_RELATIONSHIPS_FILE)
+            with open(local_rels_path, 'r', encoding='utf-8') as f:
+                rels_csv_content = f.read()
 
         # Use io.StringIO to treat the string content as a file for pandas
         nodes_file = io.StringIO(nodes_csv_content)
@@ -234,10 +248,11 @@ def calculate_learning_speed(performance_details: List[str]) -> float:
     return total_time / num_nodes if num_nodes > 0 else 0
 
 # Hàm xác định sở thích chủ đề
-def extract_topic_preference(learning_history: List[str]) -> str:
+def extract_topic_preference(driver: GraphDatabase.driver, learning_history: List[str]) -> str:
     """Xác định sở thích chủ đề dựa trên lịch sử học tập.
 
     Args:
+        driver (GraphDatabase.driver): Đối tượng driver của Neo4j.
         learning_history (List[str]): Danh sách ID của các nút đã học.
 
     Returns:
@@ -245,10 +260,10 @@ def extract_topic_preference(learning_history: List[str]) -> str:
     """
     contexts = []
     for node_id in learning_history:
-        query = f"MATCH (n {{{Config.PROPERTY_ID}: '{node_id}'}}) RETURN n.{Config.PROPERTY_CONTEXT} AS context"
+        query = f"MATCH (n {{{Config.PROPERTY_ID}: $node_id}}) RETURN n.{Config.PROPERTY_CONTEXT} AS context"
         try:
-            result = execute_cypher_query(driver, query)
-            if result:
+            result = execute_cypher_query(driver, query, params={"node_id": node_id})
+            if result and result[0].get("context"):
                 contexts.append(result[0]["context"])
         except Exception as e:
             logger.warning(f"Lỗi truy vấn context cho node {node_id}: {str(e)}")
@@ -256,10 +271,11 @@ def extract_topic_preference(learning_history: List[str]) -> str:
         return Counter(contexts).most_common(1)[0][0]
     return "Unknown"
 
-def load_student_profile(student_id: str) -> Dict:
+def load_student_profile(driver: GraphDatabase.driver, student_id: str) -> Dict:
     """Tải hồ sơ học sinh từ Neo4j hoặc trả về mặc định nếu không tìm thấy.
 
     Args:
+        driver (GraphDatabase.driver): Đối tượng driver của Neo4j.
         student_id (str): ID của học sinh.
 
     Returns:
@@ -273,20 +289,23 @@ def load_student_profile(student_id: str) -> Dict:
         result = execute_cypher_query(driver, query, {"student_id": student_id})
         if result:
             student_data = result[0]["s"]
+            learning_history = student_data.get("learning_history", "").split(",") if student_data.get("learning_history") else []
+            performance_details = student_data.get("performance_details", "").split(";") if student_data.get("performance_details") else []
+            
             return {
                 "student_id": student_data["StudentID"],
-                "learning_history": student_data.get("learning_history", "").split(",") if student_data.get("learning_history") else [],
+                "learning_history": learning_history,
                 "current_level": float(student_data.get("current_level", 0)),
-                "performance_details": student_data.get("performance_details", "").split(";") if student_data.get("performance_details") else [],
+                "performance_details": performance_details,
                 "learning_style_preference": student_data.get("learning_style_preference", Config.DEFAULT_LEARNING_STYLE),
                 "preferred_difficulty": student_data.get("preferred_difficulty", "STANDARD"),
                 "time_availability": float(student_data.get("time_availability", 60)),
-                "learning_speed": calculate_learning_speed(student_data.get("performance_details", "").split(";")),
-                "topic_preference": extract_topic_preference(student_data.get("learning_history", "").split(",")),
+                "learning_speed": calculate_learning_speed(performance_details),
+                "topic_preference": extract_topic_preference(driver, learning_history),
                 "long_term_goal": student_data.get("long_term_goal", "Not Specified")
             }
         else:
-            logger.warning(f"Không tìm thấy hồ sơ cho student_id: {student_id}")
+            logger.warning(f"Không tìm thấy hồ sơ cho student_id: {student_id}. Trả về hồ sơ mặc định.")
             return {
                 "student_id": student_id,
                 "learning_history": [],
@@ -300,7 +319,8 @@ def load_student_profile(student_id: str) -> Dict:
                 "long_term_goal": "Not Specified"
             }
     except Exception as e:
-        logger.error(f"Lỗi tải hồ sơ học sinh: {str(e)}")
+        logger.error(f"Lỗi tải hồ sơ học sinh {student_id}: {str(e)}", exc_info=True)
+        # Trả về hồ sơ mặc định trong trường hợp có lỗi
         return {
             "student_id": student_id,
             "learning_history": [],
@@ -313,3 +333,106 @@ def load_student_profile(student_id: str) -> Dict:
             "topic_preference": "Unknown",
             "long_term_goal": "Not Specified"
         }
+
+# ==============================================================================
+# CÁC HÀM CẬP NHẬT VÀ LƯU TRỮ DỮ LIỆU
+# ==============================================================================
+
+def update_student_profile(driver: GraphDatabase.driver, student_id: str, updates: Dict) -> None:
+    """
+    Cập nhật hồ sơ của một học sinh trong Neo4j.
+    """
+    logger.info(f"Bắt đầu cập nhật hồ sơ cho sinh viên: {student_id}")
+    try:
+        # Chuyển đổi list thành chuỗi trước khi lưu
+        for key, value in updates.items():
+            if isinstance(value, list):
+                # Sử dụng dấu phẩy cho learning_history và chấm phẩy cho performance_details
+                separator = ',' if key == 'learning_history' else ';'
+                updates[key] = separator.join(map(str, value))
+
+        # Tạo câu lệnh SET linh hoạt
+        set_clauses = ", ".join([f"s.{key} = ${key}" for key in updates.keys()])
+        
+        query = f"""
+        MERGE (s:Student {{StudentID: $student_id}})
+        SET {set_clauses}, s.LastUpdated = timestamp()
+        """
+        
+        # Thêm student_id vào dict tham số
+        params = {"student_id": student_id, **updates}
+        
+        execute_cypher_query(driver, query, params)
+        logger.info(f"Cập nhật hồ sơ cho sinh viên {student_id} thành công.")
+    except Exception as e:
+        logger.error(f"Lỗi khi cập nhật hồ sơ sinh viên {student_id}: {e}", exc_info=True)
+        raise
+
+def save_learning_data(driver: GraphDatabase.driver, data: Dict) -> None:
+    """
+    Lưu dữ liệu từ một phiên học vào đồ thị dưới dạng nút LearningData.
+    """
+    logger.info(f"Bắt đầu lưu dữ liệu phiên học cho sinh viên: {data.get('student_id')}")
+    try:
+        query = """
+        MATCH (s:Student {StudentID: $student_id})
+        MATCH (n:KnowledgeNode {Node_ID: $node_id})
+        CREATE (ld:LearningData {
+            student_id: $student_id,
+            node_id: $node_id,
+            timestamp: datetime(),
+            score: toFloat($score),
+            time_spent: toInteger($time_spent),
+            feedback: $feedback,
+            quiz_responses: $quiz_responses
+        })
+        CREATE (s)-[:HAS_LEARNING_DATA]->(ld)
+        CREATE (ld)-[:RELATED_TO_NODE]->(n)
+        """
+        execute_cypher_query(driver, query, data)
+        logger.info(f"Lưu dữ liệu phiên học cho nút {data.get('node_id')} thành công.")
+    except Exception as e:
+        logger.error(f"Lỗi khi lưu dữ liệu phiên học: {e}", exc_info=True)
+        raise
+
+# ==============================================================================
+# CÁC HÀM LIÊN QUAN ĐẾN VECTOR INDEX
+# ==============================================================================
+
+def initialize_vector_index(driver: GraphDatabase.driver) -> Dict:
+    """
+    Kiểm tra và khởi tạo vector index trong Neo4j nếu chưa có.
+    """
+    index_name = "knowledgeNodeEmbeddings"
+    logger.info(f"Đang kiểm tra và khởi tạo vector index: '{index_name}'...")
+    try:
+        # Kiểm tra xem index đã tồn tại chưa
+        index_exists_query = "SHOW INDEXES YIELD name WHERE name = $index_name RETURN count(*) > 0 AS exists"
+        result = execute_cypher_query(driver, index_exists_query, {"index_name": index_name})
+        
+        if result and result[0]['exists']:
+            logger.info(f"Vector index '{index_name}' đã tồn tại.")
+            return {"status": "exists", "message": f"Index '{index_name}' đã tồn tại."}
+
+        # Nếu chưa, tạo index
+        # Giả định rằng embedding được lưu trong thuộc tính 'Embedding' của nút KnowledgeNode
+        # và có kích thước là 768 (từ Gemini's embedding-001)
+        create_index_query = f"""
+        CREATE VECTOR INDEX `{index_name}` IF NOT EXISTS
+        FOR (n:KnowledgeNode) ON (n.Embedding)
+        OPTIONS {{indexConfig: {{
+            `vector.dimensions`: 768,
+            `vector.similarity_function`: 'cosine'
+        }}}}
+        """
+        execute_cypher_query(driver, create_index_query)
+        
+        # Đợi index được tạo xong (quan trọng)
+        wait_for_index_query = f"CALL db.awaitIndex('{index_name}')"
+        execute_cypher_query(driver, wait_for_index_query)
+        
+        logger.info(f"Vector index '{index_name}' đã được tạo thành công.")
+        return {"status": "created", "message": f"Index '{index_name}' đã được tạo."}
+    except Exception as e:
+        logger.error(f"Lỗi trong quá trình khởi tạo vector index: {e}", exc_info=True)
+        return {"status": "error", "message": str(e)}

@@ -1,11 +1,20 @@
 import logging
 import time
-from typing import Dict, List
+import csv
+from typing import Dict, List, Optional, Any
 
 from .config import Config
-from .path_generator import generate_learning_path, update_learning_path, suggest_prerequisites
+from .path_generator import (
+    generate_learning_path,
+    update_learning_path,
+    suggest_prerequisites,
+    determine_start_node,
+    determine_goal_node,
+)
 from .content_generator import generate_learning_content, generate_quiz, evaluate_quiz
-from .data_loader import update_student_profile, save_learning_data # Giả sử 2 hàm này sẽ ở data_loader
+
+# Import data loader functions and wrap them to match session_manager expectations
+from .data_loader import update_student_profile as dl_update_student_profile, save_learning_data as dl_save_learning_data
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +86,7 @@ def adjust_heuristic_weights(feedback_data: Dict) -> None:
     except Exception as e:
         logger.error(f"Lỗi trong adjust_heuristic_weights: {str(e)}")
 
-def run_learning_session(student_id: str, level: str, context: str, learning_style: str = None, student_goal: str = None, student_file: str = Config.STUDENT_FILE, use_llm: bool = False) -> Dict:
+def run_learning_session(student_id: str, level: str, context: str, learning_style: str = None, student_goal: str = None, student_file: str = Config.STUDENT_FILE, use_llm: bool = False, driver: Optional[Any] = None) -> Dict:
     """Thực thi toàn bộ phiên học tập từ xác định lộ trình đến đánh giá và cập nhật.
 
     Args:
@@ -268,17 +277,27 @@ def run_learning_session(student_id: str, level: str, context: str, learning_sty
             score = quiz_eval_result["score"]
             print(f"Điểm của bạn: {score}%")
 
-            # Hỏi người dùng về autosave
+                # Hỏi người dùng về autosave
             autosave = input("Bạn có muốn autosave thời gian không? (yes/no): ").lower() == "yes"
 
             # Lấy thời gian học
             time_spent = get_time_spent(start_time=start_time if autosave else None, autosave=autosave)
             time_spent = time_spent if time_spent else 30
 
-            # Cập nhật hồ sơ học sinh
-            update_profile_result = update_student_profile(student_id, node, score, time_spent)
-            if update_profile_result["status"] != "success":
-                logger.warning(f"Lỗi cập nhật hồ sơ: {update_profile_result['error_message']}")
+            # Cập nhật hồ sơ học sinh (sử dụng data_loader wrapper)
+            try:
+                updates = {
+                    "learning_history": [node["node_id"]],
+                    "performance_details": [f"{node['node_id']}:{score}:{time_spent}"]
+                }
+                if driver:
+                    dl_update_student_profile(driver, student_id, updates)
+                else:
+                    # Call with driver=None to allow import-time checks; dl_update_student_profile expects a driver,
+                    # so wrap call to avoid runtime error when driver is not provided.
+                    dl_update_student_profile(None, student_id, updates)
+            except Exception as e:
+                logger.warning(f"Lỗi cập nhật hồ sơ: {str(e)}")
 
             # Lưu dữ liệu học tập
             learning_data.append({"node_id": node["node_id"], "score": score, "time_spent": time_spent})
@@ -327,11 +346,35 @@ def run_learning_session(student_id: str, level: str, context: str, learning_sty
         # Gọi hàm điều chỉnh trọng số heuristic
         adjust_heuristic_weights(feedback_data)
 
-        # Bước 7: Lưu dữ liệu học tập
-        save_result = save_learning_data(student_id, learning_path, learning_data)
-        if save_result["status"] != "success":
-            logger.warning(f"Lỗi lưu dữ liệu: {save_result['error_message']}")
-            raise ValueError(f"Lỗi lưu dữ liệu: {save_result['error_message']}")
+        # Bước 7: Lưu dữ liệu học tập (sử dụng data_loader wrapper)
+        try:
+            if driver:
+                # save each learning_data entry via dl_save_learning_data
+                for entry in learning_data:
+                    data = {
+                        "student_id": student_id,
+                        "node_id": entry["node_id"],
+                        "score": entry["score"],
+                        "time_spent": entry["time_spent"],
+                        "feedback": "",
+                        "quiz_responses": ""
+                    }
+                    dl_save_learning_data(driver, data)
+            else:
+                # Attempt to call with None driver to keep import-time behavior consistent
+                for entry in learning_data:
+                    data = {
+                        "student_id": student_id,
+                        "node_id": entry["node_id"],
+                        "score": entry["score"],
+                        "time_spent": entry["time_spent"],
+                        "feedback": "",
+                        "quiz_responses": ""
+                    }
+                    dl_save_learning_data(None, data)
+        except Exception as e:
+            logger.warning(f"Lỗi lưu dữ liệu: {str(e)}")
+            raise ValueError(f"Lỗi lưu dữ liệu: {str(e)}")
 
         logger.info("Phiên học tập hoàn tất")
         print("\nPhiên học tập hoàn tất!")

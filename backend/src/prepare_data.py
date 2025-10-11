@@ -70,6 +70,23 @@ def main():
             rels_path = os.path.join(dirpath, 'relationships.csv')
             df_rels = pd.read_csv(rels_path, dtype=str)
 
+            # Normalize source/target column names (support variants)
+            def find_col(df, candidates):
+                for c in candidates:
+                    if c in df.columns:
+                        return c
+                return None
+
+            src_col = find_col(df_rels, ['Source_ID', 'Source_Node_ID', 'SourceId', 'source', 'source_id', 'source_node_id'])
+            tgt_col = find_col(df_rels, ['Target_ID', 'Target_Node_ID', 'TargetId', 'target', 'target_id', 'target_node_id'])
+
+            if not src_col or not tgt_col:
+                print(f"     Cảnh báo: Không tìm thấy cột source/target hợp lệ trong {rels_path}. Bỏ qua file này.")
+                continue
+
+            # Create consistent column names
+            df_rels = df_rels.rename(columns={src_col: 'Source_ID', tgt_col: 'Target_ID'})
+
             # Prefix Source_ID and Target_ID
             df_rels['Source_ID'] = prefix + '_' + df_rels['Source_ID'].astype(str)
             df_rels['Target_ID'] = prefix + '_' + df_rels['Target_ID'].astype(str)

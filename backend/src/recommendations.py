@@ -1,6 +1,15 @@
 import logging
+import os
+import csv
 from typing import Dict, List
-# Các import khác cần thiết như pandas, mlxtend, scikit-learn
+
+# Third-party libs used in this module
+import pandas as pd
+import numpy as np
+
+# Local config and helper functions
+from .config import Config
+from .data_loader import execute_cypher_query, load_student_profile
 
 logger = logging.getLogger(__name__)
 

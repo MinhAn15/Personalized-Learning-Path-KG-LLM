@@ -55,6 +55,10 @@ class Config:
     PROPERTY_SEMANTIC_TAGS = "Semantic_Tags"
     PROPERTY_FOCUSED_SEMANTIC_TAGS = "Focused_Semantic_Tags"
 
+    # Column names used in relationship CSVs
+    PROPERTY_SOURCE_ID = "Source_ID"
+    PROPERTY_TARGET_ID = "Target_ID"
+
     # Thuộc tính nút (tùy chọn)
     PROPERTY_COMMON_ERRORS = "Common_Errors"
     PROPERTY_LEARNING_STYLE_PREFERENCE = "Learning_Style_Preference"
@@ -109,6 +113,16 @@ class Config:
     DEFAULT_LEARNING_STYLE = "reading_writing"
     DEFAULT_CONTEXT_EXAMPLE = "e_learning"
     MIN_SIMILARITY_THRESHOLD = 0.5
+
+    # Cấu hình cho việc tải dữ liệu từ GitHub
+    IMPORT_NODES_FILE = "master_nodes.csv"
+    IMPORT_RELATIONSHIPS_FILE = "master_relationships.csv"
+
+    # Thư mục để lưu trữ các bài quiz được tạo ra
+    QUIZ_OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'output')
+
+    # Biến toàn cục để giữ đối tượng LLM sau khi khởi tạo
+    LLM = None
 
 # ==============================================================================
 # CẤU HÌNH KẾT NỐI (Credentials từ file .env)
