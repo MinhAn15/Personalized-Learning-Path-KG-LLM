@@ -47,7 +47,7 @@ def generate_goal_tags(student_goal, context, llm, num=30):
     Args:
         student_goal (str): Mục tiêu học tập của học sinh.
         context (str): Ngữ cảnh bổ sung (nếu có).
-        llm: Đối tượng LLM từ llama_index hoặc OpenAI để tạo nội dung.
+        llm: Đối tượng LLM từ llama_index (ví dụ: Gemini) để tạo nội dung.
 
     Returns:
         list: Danh sách các tag dưới dạng chuỗi.

@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "axios": "^1.12.2",
+    "react-flow-renderer": "^10.3.17",
+    "reactflow": "^11.11.4"
+  }
+}

@@ -1,6 +1,9 @@
 import logging
 import csv
+import os
 import pandas as pd
+import requests
+import io
 from datetime import datetime
 from typing import List, Dict, Any
 from collections import Counter
@@ -77,43 +80,89 @@ def merge_properties(existing_props: Dict[str, Any], new_props: Dict[str, Any]) 
 # CÁC HÀM TẢI VÀ XÁC THỰC DỮ LIỆU
 # ==============================================================================
 
+def _get_github_file_content(file_path: str) -> str:
+    """
+    Fetches the content of a file from a private GitHub repository.
+    """
+    if not Config.GITHUB_TOKEN:
+        raise ValueError("GITHUB_TOKEN is not set in the environment.")
+
+    # Assumes the repo is the one this code is running in.
+    # You can make these dynamic if needed.
+    owner = "MinhAn15" # Replace with your GitHub username
+    repo = "Personalized-Learning-Path-KG-LLM" # Replace with your repo name
+    
+    url = f"https://api.github.com/repos/{owner}/{repo}/contents/{file_path}"
+    
+    headers = {
+        "Authorization": f"token {Config.GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3.raw"
+    }
+    
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        return response.text
+    else:
+        raise Exception(f"Failed to fetch {file_path} from GitHub. Status: {response.status_code}, Body: {response.text}")
+
+
 def check_and_load_kg(driver: GraphDatabase.driver) -> Dict:
     """
-    Tải và hợp nhất đồ thị tri thức từ các file CSV, sử dụng Cypher LOAD CSV.
-    Hàm này sẽ tạo/cập nhật các nút và mối quan hệ, sau đó hợp nhất các nút trùng lặp.
+    Tải và hợp nhất đồ thị tri thức từ các file CSV trong private GitHub repo.
     """
-    # ... (Đây là code hàm check_and_load_kg từ notebook của bạn)
-    # Lưu ý: Hàm này khá phức tạp, hãy đảm bảo sao chép đầy đủ
-    # Tôi đã đơn giản hóa một chút để phù hợp với module hóa
-    logger.info("Bắt đầu quá trình tải và hợp nhất Knowledge Graph...")
+    logger.info("Bắt đầu quá trình tải Knowledge Graph từ GitHub...")
     try:
-        # Load nodes
-        load_nodes_query = f"""
-        LOAD CSV WITH HEADERS FROM 'file:///{Config.IMPORT_NODES_FILE}' AS row
-        MERGE (n:KnowledgeNode {{ {Config.PROPERTY_ID}: row.{Config.PROPERTY_ID} }})
-        ON CREATE SET n += row, n.Priority = toInteger(row.Priority), n.Time_Estimate = toFloat(row.Time_Estimate)
-        ON MATCH SET n += row, n.Priority = toInteger(row.Priority), n.Time_Estimate = toFloat(row.Time_Estimate)
-        """
-        execute_cypher_query(driver, load_nodes_query)
-        logger.info("Tải các nút từ CSV thành công.")
+        # Fetch file content from GitHub
+        logger.info("Đang tải nodes.csv từ GitHub...")
+        nodes_csv_content = _get_github_file_content(f"backend/data/github_import/{Config.IMPORT_NODES_FILE}")
+        
+        logger.info("Đang tải relationships.csv từ GitHub...")
+        rels_csv_content = _get_github_file_content(f"backend/data/github_import/{Config.IMPORT_RELATIONSHIPS_FILE}")
 
-        # Load relationships
-        load_rels_query = f"""
-        LOAD CSV WITH HEADERS FROM 'file:///{Config.IMPORT_RELATIONSHIPS_FILE}' AS row
-        MATCH (source:KnowledgeNode {{ {Config.PROPERTY_ID}: row.{Config.PROPERTY_SOURCE_ID} }})
-        MATCH (target:KnowledgeNode {{ {Config.PROPERTY_ID}: row.{Config.PROPERTY_TARGET_ID} }})
-        CALL apoc.merge.relationship(source, row.Relationship_Type, {{}}, {{ Weight: toFloat(row.Weight), Dependency: toFloat(row.Dependency) }}, target) YIELD rel
-        RETURN count(rel)
-        """
-        execute_cypher_query(driver, load_rels_query)
-        logger.info("Tải các mối quan hệ từ CSV thành công.")
+        # Use io.StringIO to treat the string content as a file for pandas
+        nodes_file = io.StringIO(nodes_csv_content)
+        rels_file = io.StringIO(rels_csv_content)
+
+        # --- Client-Side Upload Logic (re-used from previous step) ---
+        def _sanitize_rel_type(s: str) -> str:
+            import re
+            if not isinstance(s, str) or not s: return 'RELATED_TO'
+            return re.sub(r'[^A-Za-z0-9_]', '_', s).upper() or 'RELATED_TO'
+
+        # Upload nodes
+        df_nodes = pd.read_csv(nodes_file, dtype=str).fillna('')
+        CHUNK = 200
+        for start in range(0, len(df_nodes), CHUNK):
+            chunk = df_nodes.iloc[start:start+CHUNK]
+            rows = chunk.to_dict(orient='records')
+            cypher = f"UNWIND $rows AS row MERGE (n:KnowledgeNode {{ {Config.PROPERTY_ID}: row['{Config.PROPERTY_ID}'] }}) SET n += row, n.Priority = toInteger(row.Priority), n.Time_Estimate = toFloat(row.Time_Estimate)"
+            execute_cypher_query(driver, cypher, params={"rows": rows})
+        logger.info("Tải xong các nút (nodes) từ GitHub.")
+
+        # Upload relationships
+        df_rels = pd.read_csv(rels_file, dtype=str).fillna('')
+        for start in range(0, len(df_rels), CHUNK):
+            chunk = df_rels.iloc[start:start+CHUNK]
+            rows = chunk.to_dict(orient='records')
+            with driver.session(database="neo4j") as session:
+                tx = session.begin_transaction()
+                for r in rows:
+                    rel_type = _sanitize_rel_type(r.get('Relationship_Type') or r.get('RelationshipType'))
+                    source_id = r.get(Config.PROPERTY_SOURCE_ID) or r.get('source') or r.get('source_id')
+                    target_id = r.get(Config.PROPERTY_TARGET_ID) or r.get('target') or r.get('target_id')
+                    weight = r.get('Weight')
+                    dependency = r.get('Dependency')
+                    cypher = f"MATCH (s:KnowledgeNode {{ {Config.PROPERTY_ID}: $src }}), (t:KnowledgeNode {{ {Config.PROPERTY_ID}: $tgt }}) MERGE (s)-[rel:{rel_type}]->(t) SET rel.Weight = toFloat($weight), rel.Dependency = toFloat($dependency)"
+                    tx.run(cypher, src=source_id, tgt=target_id, weight=weight, dependency=dependency)
+                tx.commit()
+        logger.info("Tải xong các mối quan hệ (relationships) từ GitHub.")
         
-        # (Phần hợp nhất các node trùng lặp có thể được thêm vào đây nếu cần)
-        
-        logger.info("Hoàn tất quá trình tải Knowledge Graph.")
+        logger.info("Hoàn tất quá trình tải Knowledge Graph từ GitHub.")
         return {"status": "success", "error_message": None}
+
     except Exception as e:
-        logger.error(f"Lỗi trong check_and_load_kg: {str(e)}")
+        logger.error(f"Lỗi trong check_and_load_kg (GitHub): {e}", exc_info=True)
         return {"status": "error", "error_message": str(e)}
 
 

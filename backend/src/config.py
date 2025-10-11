@@ -25,8 +25,8 @@ class Config:
     STUDENT_FILE = os.path.join(DATA_DIR, "input", "student.csv")
     
     # Đường dẫn cho Neo4j import (file nằm trong thư mục 'import' của Neo4j)
-    IMPORT_NODES_FILE = "nodes.csv"
-    IMPORT_RELATIONSHIPS_FILE = "relationships.csv"
+    IMPORT_NODES_FILE = "master_nodes.csv"
+    IMPORT_RELATIONSHIPS_FILE = "master_relationships.csv"
 
     # Đường dẫn tệp dữ liệu đầu ra và lưu trữ
     LEARNING_PATHS_FILE = os.path.join(OUTPUT_DIR, "learning_paths.csv")
@@ -119,14 +119,16 @@ NEO4J_CONFIG = {
     "password": os.getenv("NEO4J_PASSWORD"),
 }
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-# LlamaIndex và một số thư viện khác tìm key OpenAI trong biến môi trường
-if OPENAI_API_KEY:
-    os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+
+# LlamaIndex và một số thư viện khác tìm key trong biến môi trường
+if GEMINI_API_KEY:
+    os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
 else:
-    print("Cảnh báo: OPENAI_API_KEY không được tìm thấy trong file .env")
+    print("Cảnh báo: GEMINI_API_KEY không được tìm thấy trong file .env")
 
 # Kiểm tra xem các biến môi trường đã được tải thành công chưa
-if not all(NEO4J_CONFIG.values()) or not OPENAI_API_KEY:
-    print("Cảnh báo: Một hoặc nhiều biến môi trường (Neo4j, OpenAI) chưa được thiết lập trong file .env.")
+if not all(NEO4J_CONFIG.values()) or not GEMINI_API_KEY:
+    print("Cảnh báo: Một hoặc nhiều biến môi trường (Neo4j, Gemini) chưa được thiết lập trong file .env.")
     print("Vui lòng tạo file .env ở thư mục gốc và thêm các thông tin cần thiết.")

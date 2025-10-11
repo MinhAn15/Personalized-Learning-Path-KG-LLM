@@ -10,15 +10,14 @@ import sys
 
 # Import các thư viện và module cần thiết
 from neo4j import GraphDatabase
-import openai
 from llama_index.core import Settings
-from llama_index.llms.openai import OpenAI
-from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.llms.gemini import Gemini
+from llama_index.embeddings.gemini import GeminiEmbedding
 
 # Import các module tự định nghĩa
 # Cấu trúc `.` có nghĩa là import từ cùng một package (thư mục `src`)
 try:
-    from .config import Config, NEO4J_CONFIG, OPENAI_API_KEY
+    from .config import Config, NEO4J_CONFIG, GEMINI_API_KEY
     from .data_loader import (
         execute_cypher_query, check_and_load_students, verify_graph, 
         load_student_profile,
@@ -31,7 +30,7 @@ try:
     )
 except ImportError:
     # Xử lý trường hợp chạy file trực tiếp (python src/main.py)
-    from config import Config, NEO4J_CONFIG, OPENAI_API_KEY
+    from config import Config, NEO4J_CONFIG, GEMINI_API_KEY
     from data_loader import (
         execute_cypher_query, check_and_load_students, verify_graph, 
         load_student_profile,
@@ -63,7 +62,7 @@ def setup_logging():
     logging.info("Logger đã được cấu hình.")
 
 def initialize_connections_and_settings():
-    """Khởi tạo kết nối tới Neo4j và cấu hình LlamaIndex/OpenAI."""
+    """Khởi tạo kết nối tới Neo4j và cấu hình LlamaIndex/Gemini."""
     # 1. Kết nối tới Neo4j
     if not all(NEO4J_CONFIG.values()):
         logging.error("Thông tin kết nối Neo4j chưa được cấu hình trong file .env")
@@ -80,17 +79,15 @@ def initialize_connections_and_settings():
         logging.error(f"Lỗi kết nối Neo4j: {e}")
         raise
 
-    # 2. Cấu hình OpenAI và LlamaIndex
-    if not OPENAI_API_KEY:
-        logging.error("OPENAI_API_KEY chưa được cấu hình trong file .env")
-        raise ValueError("OPENAI_API_KEY chưa được cấu hình.")
+    # 2. Cấu hình Gemini và LlamaIndex
+    if not GEMINI_API_KEY:
+        logging.error("GEMINI_API_KEY chưa được cấu hình trong file .env")
+        raise ValueError("GEMINI_API_KEY chưa được cấu hình.")
     
-    openai.api_key = OPENAI_API_KEY
+    Settings.llm = Gemini(model="models/gemini-pro", temperature=0.1)
+    Settings.embed_model = GeminiEmbedding(model_name="models/embedding-001")
     
-    Settings.llm = OpenAI(model="gpt-3.5-turbo", temperature=0.1)
-    Settings.embed_model = OpenAIEmbedding(model_name="text-embedding-3-small")
-    
-    logging.info("Cấu hình LlamaIndex và OpenAI LLM thành công.")
+    logging.info("Cấu hình LlamaIndex và Gemini LLM thành công.")
     
     return driver
 
@@ -99,15 +96,14 @@ import logging
 import sys
 import time
 from neo4j import GraphDatabase
-import openai
 from llama_index.core import Settings
-from llama_index.llms.openai import OpenAI
-from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.llms.gemini import Gemini
+from llama_index.embeddings.gemini import GeminiEmbedding
 
 # Import các module đã được tách
 # Cấu trúc `.` có nghĩa là import từ cùng một package (thư mục `src`)
 try:
-    from .config import Config, NEO4J_CONFIG, OPENAI_API_KEY
+    from .config import Config, NEO4J_CONFIG, GEMINI_API_KEY
     from .data_loader import (
         check_and_load_students, verify_graph, load_student_profile, 
         initialize_vector_index # Thêm hàm này từ data_loader
@@ -116,7 +112,7 @@ try:
     from .recommendations import collaborative_filtering, apply_apriori
 except ImportError:
     # Xử lý trường hợp chạy file trực tiếp (python src/main.py)
-    from config import Config, NEO4J_CONFIG, OPENAI_API_KEY
+    from config import Config, NEO4J_CONFIG, GEMINI_API_KEY
     from data_loader import (
         check_and_load_students, verify_graph, load_student_profile,
         initialize_vector_index
@@ -150,7 +146,7 @@ def setup_logging():
     logging.info("Bắt đầu phiên làm việc mới. Logger đã được cấu hình.")
 
 def initialize_connections_and_settings():
-    """Khởi tạo kết nối tới Neo4j và cấu hình LlamaIndex/OpenAI."""
+    """Khởi tạo kết nối tới Neo4j và cấu hình LlamaIndex/Gemini."""
     logging.info("Đang khởi tạo các kết nối và thiết lập...")
     # 1. Kết nối tới Neo4j
     if not all(NEO4J_CONFIG.values()):
@@ -168,17 +164,15 @@ def initialize_connections_and_settings():
         logging.error(f"Lỗi kết nối Neo4j: {e}")
         raise
 
-    # 2. Cấu hình OpenAI và LlamaIndex
-    if not OPENAI_API_KEY:
-        logging.error("OPENAI_API_KEY chưa được cấu hình trong file .env")
-        raise ValueError("OPENAI_API_KEY chưa được cấu hình.")
+    # 2. Cấu hình Gemini và LlamaIndex
+    if not GEMINI_API_KEY:
+        logging.error("GEMINI_API_KEY chưa được cấu hình trong file .env")
+        raise ValueError("GEMINI_API_KEY chưa được cấu hình.")
     
-    openai.api_key = OPENAI_API_KEY
+    Settings.llm = Gemini(model="models/gemini-pro", temperature=0.1)
+    Settings.embed_model = GeminiEmbedding(model_name="models/embedding-001")
     
-    Settings.llm = OpenAI(model="gpt-3.5-turbo", temperature=0.1)
-    Settings.embed_model = OpenAIEmbedding(model_name="text-embedding-3-small")
-    
-    logging.info("Cấu hình LlamaIndex và OpenAI LLM thành công.")
+    logging.info("Cấu hình LlamaIndex và Gemini LLM thành công.")
     
     return driver
 
