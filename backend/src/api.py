@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import logging
 from typing import Dict, Any
+import threading
 
 # Import các hàm logic chính từ các module của bạn
 from .session_manager import run_learning_session
@@ -26,13 +27,28 @@ app.add_middleware(
 def startup_event():
     """Khởi tạo kết nối Neo4j khi server khởi động."""
     global driver
+
+    # Run the potentially-blocking initialization in a background thread so
+    # the ASGI lifespan doesn't hang. This lets uvicorn start promptly and
+    # the app will fill `driver` when initialization completes.
     try:
         # Import here to avoid circular import at module import time
         from .main import initialize_connections_and_settings
-        driver = initialize_connections_and_settings()
-        logger.info("Khởi tạo API thành công.")
+
+        def _init_bg():
+            global driver
+            try:
+                d = initialize_connections_and_settings()
+                driver = d
+                logger.info("Khởi tạo API thành công (background).")
+            except Exception as e:
+                logger.error(f"Lỗi nghiêm trọng khi khởi tạo API trong background: {e}")
+                driver = None
+
+        threading.Thread(target=_init_bg, daemon=True).start()
+        logger.info("Bắt đầu khởi tạo kết nối trong background.")
     except Exception as e:
-        logger.error(f"Lỗi nghiêm trọng khi khởi tạo API: {e}")
+        logger.error(f"Lỗi khi bắt đầu background init: {e}")
         driver = None
 
 

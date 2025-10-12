@@ -95,29 +95,67 @@ Dự án nghiên cứu và xây dựng một hệ thống mẫu (prototype) nh�
     * Sao chép nội dung dưới đây vào file `.env` và thay thế bằng thông tin của bạn:
         ```env
         # Biến môi trường cho dự án
-
-        # --- OpenAI API ---
-        OPENAI_API_KEY="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        # --- Gemini / Google Generative AI ---
+        # The code in this project uses Google/Generative AI (Gemini) as the
+        # primary LLM. Set your key here. In some places the runtime may also
+        # read GOOGLE_API_KEY as a fallback.
+        GEMINI_API_KEY="ya29.your_gemini_api_key_here"
 
         # --- Neo4j AuraDB ---
         NEO4J_URL="neo4j+s://xxxxxxxx.databases.neo4j.io"
         NEO4J_USER="neo4j"
         NEO4J_PASSWORD="your_strong_auradb_password"
+
+        # --- GitHub (optional, for public/private repo fetches) ---
+        GITHUB_TOKEN="ghp_xxx"
         ```
     * **Quan trọng:** Thêm file `.env` vào `.gitignore` để không đưa thông tin nhạy cảm lên GitHub.
 
-#### **3. Tải Dữ Liệu Lên Neo4j**
+#### **5. Tải Dữ Liệu Lên Neo4j**
 
 * Hệ thống sử dụng các file `nodes.csv` và `relationships.csv` để xây dựng đồ thị. Các file này được tạo ra từ quy trình tiền xử lý (xem bên dưới).
 * Bạn cần đặt các file CSV này vào thư mục `import` của cơ sở dữ liệu Neo4j của bạn, hoặc điều chỉnh hàm `check_and_load_kg` để tải từ một đường dẫn khác.
 
-#### **4. Chạy Chương Trình**
+#### **6. Chạy Ứng Dụng (Main flow)**
 
-Mở terminal trong VS Code và chạy lệnh:
-```bash
-python src/main.py
+Ứng dụng chính được triển khai dưới dạng một FastAPI app trong `backend/src/api.py`.
+Để chạy API server (tức là main flow), dùng `uvicorn` và chạy bằng Python trong virtualenv
+để đảm bảo các package được lấy từ môi trường ảo của dự án.
+
+Ví dụ (PowerShell / Windows):
+
+```powershell
+& 'venv\Scripts\python.exe' -m uvicorn backend.src.api:app --host 127.0.0.1 --port 8000
 ```
-Chương trình sẽ khởi động và bắt đầu hỏi bạn các thông tin đầu vào để tạo lộ trình học tập.
+
+Hoặc nếu bạn đang dùng virtualenv nằm trong `.venv` (the workspace default used here):
+
+```powershell
+& '.venv\Scripts\python.exe' -m uvicorn backend.src.api:app --host 127.0.0.1 --port 8000
+```
+
+Ghi chú vận hành:
+- Khi server khởi động, việc khởi tạo các kết nối tới Neo4j và cấu hình LLM có thể chạy
+    trong background (một thread) để tránh chặn quá trình khởi động của ASGI server.
+- Nếu Neo4j hoặc Gemini chưa sẵn sàng, API vẫn cung cấp các endpoint demo (ví dụ
+    `/api/generate_path_demo`) để frontend hoặc trình duyệt kiểm tra giao diện.
+- Nếu bạn gặp lỗi liên quan tới `lifespan` hoặc thấy server dừng tự động khi khởi động,
+    chạy `uvicorn` ở foreground (như lệnh trên) để xem log chi tiết và xác định nguyên nhân.
+
+Sau khi server chạy, truy cập:
+
+- Health / status: `http://127.0.0.1:8000/api/status`
+- Demo path: gửi POST tới `http://127.0.0.1:8000/api/generate_path_demo` với body JSON:
+
+```json
+{
+    "student_id": "demo",
+    "level": "beginner",
+    "context": "test",
+    "student_goal": "learn SQL",
+    "use_llm": false
+}
+```
 
 ---
 

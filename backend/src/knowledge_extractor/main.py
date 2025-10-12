@@ -4,16 +4,23 @@ Main entry point for the knowledge extraction and validation pipeline.
 import os
 import argparse
 import logging
+import warnings
+from dotenv import load_dotenv
+
+load_dotenv()
+warnings.filterwarnings("ignore", category=UserWarning, message=".*validate_default.*")
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from .extractor import PDFKnowledgeExtractor
 from .validator import CSVValidator, GraphValidator
 from ..config import Config
 from neo4j import GraphDatabase
-
-# --- Thêm vào ---
-# Import các thành phần cần thiết để khởi tạo LLM
 from llama_index.core import Settings
-from llama_index.llms.gemini import Gemini
-# ----------------
+
+# Attempt to import our GenAIWrapper if available
+try:
+    from ..genai_wrapper import GenAIWrapper
+except Exception:
+    GenAIWrapper = None
 
 # Configure logging
 logging.basicConfig(
@@ -32,20 +39,20 @@ def run_extraction(pdf_path: str, output_dir: str):
     """
     logging.info(f"Bắt đầu quá trình trích xuất cho: {pdf_path}")
 
-    # --- Thêm vào: Khởi tạo LLM ---
-    # Logic này đảm bảo script có thể hoạt động độc lập
-    try:
-        logging.info("Đang khởi tạo mô hình ngôn ngữ Gemini...")
-        llm = Gemini(model_name="models/gemini-pro", api_key=Config.GEMINI_API_KEY)
-        # Gán LLM vào cả Config và Settings để đảm bảo tính nhất quán
-        Config.LLM = llm
-        Settings.llm = llm
-        logging.info("Khởi tạo LLM thành công.")
-    except Exception as e:
-        logging.error(f"Lỗi nghiêm trọng khi khởi tạo LLM: {e}")
-        logging.error("Hãy đảm bảo biến GEMINI_API_KEY trong file .env đã được cấu hình chính xác.")
-        return
-    # ---------------------------------
+    # --- Ensure LLM is available in Config or try to create one locally ---
+    if not getattr(Config, 'LLM', None):
+        if GenAIWrapper is not None and getattr(Config, 'GEMINI_API_KEY', None):
+            try:
+                Config.LLM = GenAIWrapper('models/gemini-pro-latest', api_key=Config.GEMINI_API_KEY)
+                Settings.llm = Config.LLM
+                logging.info('Initialized local GenAIWrapper for knowledge_extractor')
+            except Exception as e:
+                logging.error(f'Failed to init GenAIWrapper locally: {e}')
+                logging.error('Proceeding without LLM; extractor may be limited.')
+        else:
+            logging.warning('No LLM available in Config; extractor will run without LLM assistance.')
+    else:
+        Settings.llm = Config.LLM
 
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)

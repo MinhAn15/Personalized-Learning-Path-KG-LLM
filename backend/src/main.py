@@ -1,6 +1,14 @@
 import os
 import sys
 import logging
+import warnings
+from dotenv import load_dotenv
+
+# Load .env early and set GOOGLE_API_KEY from GEMINI_API_KEY if present to satisfy
+# libraries that expect GOOGLE_API_KEY or ADC. Also suppress noisy dependency warnings.
+load_dotenv()
+warnings.filterwarnings("ignore", category=UserWarning, message=".*validate_default.*")
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 # Local imports
 from .config import Config
@@ -17,21 +25,15 @@ from .api import app # Import FastAPI app
 
 # External libs used for initialization
 from neo4j import GraphDatabase
+_LLAMA_INDEX_HAS_SETTINGS = False
+Settings = None
+Gemini = None
+GeminiEmbedding = None
 try:
-    from llama_index.llms.gemini import Gemini
-    from llama_index.embeddings.gemini import GeminiEmbedding
-    _LLAMA_INDEX_HAS_SETTINGS = False
-    try:
-        # Some llama_index versions expose a Settings helper; guard usage
-        from llama_index import Settings
-        _LLAMA_INDEX_HAS_SETTINGS = True
-    except Exception:
-        Settings = None
+    # Prefer our genai wrapper which uses google.generativeai directly
+    from .genai_wrapper import GenAIWrapper
 except Exception:
-    # If imports fail, we'll surface clearer errors during initialization below
-    Gemini = None
-    GeminiEmbedding = None
-    Settings = None
+    GenAIWrapper = None
 
 # ==============================================================================
 # THIẾT LẬP BAN ĐẦU (SETUP)
@@ -67,7 +69,8 @@ def initialize_connections_and_settings():
     neo_cfg = _config_module.NEO4J_CONFIG
     if not all([neo_cfg.get('url'), neo_cfg.get('username'), neo_cfg.get('password')]):
         logging.error("Thông tin kết nối Neo4j chưa được cấu hình trong file .env")
-        raise ValueError("Thông tin kết nối Neo4j chưa được cấu hình.")
+        logging.warning("Server sẽ khởi động ở chế độ demo (Neo4j unavailable). Set NEO4J_URL/NEO4J_USER/NEO4J_PASSWORD to enable DB features.")
+        return None
 
     try:
         driver = GraphDatabase.driver(
@@ -79,7 +82,8 @@ def initialize_connections_and_settings():
         logging.info("Kết nối tới Neo4j AuraDB thành công.")
     except Exception as e:
         logging.error(f"Lỗi kết nối Neo4j: {e}")
-        raise
+        logging.warning("Tiếp tục khởi động server ở chế độ demo mà không có Neo4j.")
+        return None
 
     # 2. Tải dữ liệu KG ban đầu nếu cần
     try:
@@ -97,23 +101,38 @@ def initialize_connections_and_settings():
         else:
             try:
                 # Try a sensible default model name; if not found, log and continue
-                try_models = ["models/gemini-pro", "gemini-pro", "text-bison@001"]
+                # Prefer the GenAIWrapper using google.generativeai
                 llm = None
                 embed_model = None
-                for m in try_models:
+                if GenAIWrapper is not None:
                     try:
-                        llm = Gemini(model_name=m, api_key=_config_module.GEMINI_API_KEY)
-                        embed_model = GeminiEmbedding(model_name="models/embedding-001")
-                        logging.info(f"Gemini initialized with model {m}")
-                        break
+                        preferred = "models/gemini-pro-latest"
+                        llm = GenAIWrapper(preferred, api_key=_config_module.GEMINI_API_KEY)
+                        # Use the wrapper's embed method as Config.EMBED_MODEL placeholder
+                        embed_model = llm
+                        logging.info(f"GenAIWrapper initialized with model {preferred}")
                     except Exception as e:
-                        logging.warning(f"Gemini model {m} not available: {e}")
+                        logging.warning(f"GenAIWrapper init failed: {e}")
+                else:
+                    logging.warning("GenAIWrapper not available; falling back to existing llama-index Gemini if installed.")
+
+                # Fall back to llama-index gemini classes if available
+                if llm is None and Gemini is not None:
+                    try_models = ["models/gemini-pro", "gemini-pro", "text-bison@001"]
+                    for m in try_models:
+                        try:
+                            llm = Gemini(model_name=m, api_key=_config_module.GEMINI_API_KEY)
+                            embed_model = GeminiEmbedding(model_name="models/embedding-001")
+                            logging.info(f"Gemini (llama-index) initialized with model {m}")
+                            break
+                        except Exception as e:
+                            logging.warning(f"Gemini model {m} not available: {e}")
 
                 if llm and embed_model:
                     Config.LLM = llm
                     Config.EMBED_MODEL = embed_model
                 else:
-                    logging.warning("Không thể khởi tạo Gemini với bất kỳ model thử nghiệm nào; LLM features sẽ tạm thời bị vô hiệu hoá.")
+                    logging.warning("Không thể khởi tạo LLM/embed model; LLM features sẽ tạm thời bị vô hiệu hoá.")
             except Exception as e:
                 logging.warning(f"Lỗi khi khởi tạo Gemini (bắt lỗi): {e}")
     except Exception as e:
