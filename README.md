@@ -18,7 +18,7 @@ Dự án nghiên cứu và xây dựng một hệ thống mẫu (prototype) nh�
 
 [cite_start]Kiến trúc tổng thể của hệ thống được thiết kế theo mô hình 3 lớp và được minh họa chi tiết bằng **mô hình C4**, giúp làm rõ sự tương tác giữa các thành phần từ cấp độ tổng quan (Context) đến chi tiết (Component).
 
-* **Tầng Giao Diện Người Dùng (UI Layer):** Giao diện dòng lệnh (và Streamlit trong tương lai) để người dùng tương tác.
+* **Tầng Giao Diện Người Dùng (UI Layer):** Next.js (React) frontend located in the `frontend/` folder for browser-based interaction. There is also a minimal command-line interface for ad-hoc runs in `backend/src/main.py`.
 * **Tầng Xử Lý Logic (Logic Layer):** "Bộ não" của hệ thống, được viết bằng **Python**, chứa các module xử lý yêu cầu, tạo lộ trình (thuật toán A\*), và sinh nội dung (gọi API LLM).
 * **Tầng Dữ Liệu (Data Layer):** Bao gồm cơ sở dữ liệu đồ thị **Neo4j AuraDB** để lưu trữ đồ thị tri thức và **LlamaIndex** để tạo các chỉ mục (index) cho việc truy vấn ngữ nghĩa và đồ thị.
 
@@ -31,7 +31,7 @@ Dự án nghiên cứu và xây dựng một hệ thống mẫu (prototype) nh�
 
 * **Ngôn ngữ:** Python 3.x
 * **Cơ sở dữ liệu Đồ thị:** Neo4j AuraDB (Cloud)
-* **LLM & Indexing:** OpenAI (GPT-3.5-Turbo), LlamaIndex
+* **LLM & Indexing:** Google Generative AI (Gemini) is the primary LLM surface used by the backend (via a small compatibility wrapper). `llama-index` is referenced in some modules as an optional integration for indexing and adapters, but Gemini (google.generativeai) is the recommended runtime.
 * **Thư viện Python chính:** `neo4j`, `llama-index`, `pandas`, `scikit-learn`, `mlxtend`, `python-dotenv`.
 
 ---
@@ -41,21 +41,16 @@ Dự án nghiên cứu và xây dựng một hệ thống mẫu (prototype) nh�
 ```
 /Personalized-Learning-Path-KG-LLM
 |
-├── 📂 data/
-|   ├── 📂 input/
-|   └── 📂 output/
+├── 📂 backend/            # Python backend (FastAPI) and data processing
+|   ├── 📂 data/
+|   └── 📂 src/
+|       ├── api.py
+|       ├── main.py
+|       └── ...
+├── 📂 frontend/           # Next.js (React) frontend app
 ├── 📂 notebooks/
 ├── 📂 prompts/
-├── 📂 src/
-|   ├── - config.py
-|   ├── - data_loader.py
-|   ├── - content_generator.py
-|   ├── - path_generator.py
-|   ├── - recommendations.py
-|   ├── - session_manager.py
-|   └── - main.py
 ├── 📄 .env
-├── 📄 .gitignore
 ├── 📄 README.md
 └── 📄 requirements.txt
 ```
@@ -79,15 +74,16 @@ Dự án nghiên cứu và xây dựng một hệ thống mẫu (prototype) nh�
     cd Personalized-Learning-Path-KG-LLM
     ```
 
-2.  **Tạo và kích hoạt môi trường ảo (khuyến khích):**
+2.  **Tạo và kích hoạt môi trường ảo cho backend (khuyến khích):**
     ```bash
     python -m venv venv
     source venv/bin/activate  # Trên Windows: venv\Scripts\activate
     ```
 
-3.  **Cài đặt các thư viện cần thiết:**
+3.  **Cài đặt các thư viện cần thiết cho backend:**
     ```bash
-    pip install -r requirements.txt
+    # Trong thư mục gốc của repo
+    & '(.venv)\Scripts\python.exe' -m pip install -r backend/requirements.txt
     ```
 
 4.  **Thiết lập biến môi trường:**
@@ -111,14 +107,31 @@ Dự án nghiên cứu và xây dựng một hệ thống mẫu (prototype) nh�
         ```
     * **Quan trọng:** Thêm file `.env` vào `.gitignore` để không đưa thông tin nhạy cảm lên GitHub.
 
+#### **4. Cài đặt và chạy frontend (Next.js)**
+
+1. Chuyển vào thư mục frontend và cài dependencies:
+
+```bash
+cd frontend
+npm install
+```
+
+2. Chạy frontend ở chế độ phát triển:
+
+```bash
+npm run dev
+```
+
+Frontend mặc định sẽ chạy trên `http://localhost:3000`. Đảm bảo backend API (`http://127.0.0.1:8000`) đang chạy hoặc cập nhật cấu hình API base URL trong frontend nếu cần.
+
 #### **5. Tải Dữ Liệu Lên Neo4j**
 
 * Hệ thống sử dụng các file `nodes.csv` và `relationships.csv` để xây dựng đồ thị. Các file này được tạo ra từ quy trình tiền xử lý (xem bên dưới).
 * Bạn cần đặt các file CSV này vào thư mục `import` của cơ sở dữ liệu Neo4j của bạn, hoặc điều chỉnh hàm `check_and_load_kg` để tải từ một đường dẫn khác.
 
-#### **6. Chạy Ứng Dụng (Main flow)**
+#### **6. Chạy Ứng Dụng (Main flow - backend)**
 
-Ứng dụng chính được triển khai dưới dạng một FastAPI app trong `backend/src/api.py`.
+Ứng dụng chính backend được triển khai dưới dạng một FastAPI app trong `backend/src/api.py`.
 Để chạy API server (tức là main flow), dùng `uvicorn` và chạy bằng Python trong virtualenv
 để đảm bảo các package được lấy từ môi trường ảo của dự án.
 
@@ -136,7 +149,8 @@ Hoặc nếu bạn đang dùng virtualenv nằm trong `.venv` (the workspace def
 
 Ghi chú vận hành:
 - Khi server khởi động, việc khởi tạo các kết nối tới Neo4j và cấu hình LLM có thể chạy
-    trong background (một thread) để tránh chặn quá trình khởi động của ASGI server.
+    trong background (một thread) để tránh chặn quá trình khởi động của ASGI server. Code hiện đã
+    triển khai một background init để giảm nguy cơ chặn startup.
 - Nếu Neo4j hoặc Gemini chưa sẵn sàng, API vẫn cung cấp các endpoint demo (ví dụ
     `/api/generate_path_demo`) để frontend hoặc trình duyệt kiểm tra giao diện.
 - Nếu bạn gặp lỗi liên quan tới `lifespan` hoặc thấy server dừng tự động khi khởi động,
@@ -176,9 +190,77 @@ Hệ thống hoạt động qua 2 giai đoạn chính:
 
 ---
 
-## 📈 Hướng Phát Triển
+## � Tải dữ liệu & Upload vào Neo4j (chi tiết)
+
+Dự án có sẵn các công cụ tiền xử lý và tải dữ liệu để xây dựng Knowledge Graph từ CSV. Dưới đây là các bước thường dùng:
+
+- Các file CSV generated (ví dụ `master_nodes.csv` và `master_relationships.csv`) thường nằm trong `backend/data/github_import/`.
+- Tạo/chuẩn hoá CSV từ thư mục input bằng script `prepare_data.py`:
+
+```powershell
+# Chạy prepare_data để tổng hợp CSV từ thư mục input
+& '.venv\Scripts\python.exe' backend/src/prepare_data.py
+```
+
+- Tải CSV lên Neo4j bằng helper `check_and_load_kg` (hàm kiểm tra và tải dữ liệu):
+
+```powershell
+& '.venv\Scripts\python.exe' -c "from neo4j import GraphDatabase; from backend.src.config import NEO4J_CONFIG; from backend.src.data_loader import check_and_load_kg; drv=GraphDatabase.driver(NEO4J_CONFIG['url'], auth=(NEO4J_CONFIG['username'], NEO4J_CONFIG['password'])); print(check_and_load_kg(drv))"
+```
+
+- Hoặc import thủ công bằng Neo4j Browser / LOAD CSV: copy `master_nodes.csv` và `master_relationships.csv` vào thư mục import của Neo4j và chạy Cypher tương ứng.
+
+> Lưu ý: đảm bảo biến môi trường `NEO4J_URL`, `NEO4J_USER`, `NEO4J_PASSWORD` trong `.env` là đúng.
+
+## 🛠️ Troubleshooting (Vấn đề phổ biến và cách khắc phục)
+
+1) Uvicorn startup hangs / asyncio.exceptions.CancelledError / lifespan errors
+
+ - Triệu chứng: khi chạy `uvicorn backend.src.api:app` server in ra logs về `Waiting for application startup` rồi dừng với `CancelledError`.
+ - Nguyên nhân phổ biến: khối lượng công việc trong sự kiện startup (lifespan) chặn tiến trình (ví dụ: chờ kết nối mạng tới Neo4j hoặc LLM) hoặc một exception xảy ra trong startup handler.
+ - Cách kiểm tra & khắc phục nhanh:
+
+```powershell
+# Chạy uvicorn ở foreground để xem log chi tiết
+& '.venv\Scripts\python.exe' -m uvicorn backend.src.api:app --host 127.0.0.1 --port 8000
+
+# Nếu cần debug nhanh và bỏ qua sự kiện lifespan (không khuyến nghị cho production):
+& '.venv\Scripts\python.exe' -m uvicorn backend.src.api:app --host 127.0.0.1 --port 8000 --lifespan off
+```
+
+ - Lưu ý: dự án hiện chạy khởi tạo Neo4j/LLM trong background thread để giảm chặn lúc startup, nhưng nếu cấu hình sai (missing env, network blocked), background init vẫn có thể fail — hãy xem logs.
+
+2) GEMINI / LLM không hoạt động (không có API key hoặc lỗi model)
+
+ - Triệu chứng: các endpoint LLM trả lỗi, hoặc `api/status` báo `gemini: false`.
+ - Kiểm tra: đảm bảo bạn đã thêm `GEMINI_API_KEY` vào file `.env` (hoặc `GOOGLE_API_KEY` làm fallback).
+
+```env
+GEMINI_API_KEY="ya29.your_gemini_api_key_here"
+```
+
+ - Nếu backend sử dụng adapter `llama-index` ở một số phần, cài `llama-index` và adapter tương ứng.
+
+3) Neo4j connectivity / authentication errors
+
+ - Triệu chứng: `driver.verify_connectivity()` fails, or `check_and_load_kg` returns errors.
+ - Kiểm tra:
+   - Mở `NEO4J_URL` (ví dụ `neo4j+s://<id>.databases.neo4j.io`), user and password in `.env`.
+   - Test via the Python snippet shown above or via Neo4j Browser.
+
+4) Logs & nơi tìm log
+
+ - Backend logs: `backend/src/main.py` configures logging to a file under `Config.LOG_DIR` (mặc định `backend/logs/learning_path_system.log` nếu cấu hình theo mặc định).
+ - Tail logs in PowerShell:
+
+```powershell
+Get-Content -Path .\backend\logs\learning_path_system.log -Wait -Tail 200
+```
+
+## �📈 Hướng Phát Triển (gợi ý)
 
 * **Nâng cao chất lượng KG:** Xây dựng cơ chế cho phép chuyên gia kiểm duyệt và tinh chỉnh đồ thị tri thức.
-* **Xây dựng Giao diện người dùng:** Phát triển giao diện web thân thiện bằng **Streamlit** để nâng cao trải nghiệm người dùng.
-* **Tối ưu hóa LLM:** Thử nghiệm với các mô hình nhỏ hơn (distilled models) hoặc các kỹ thuật caching để giảm chi phí và độ trễ.
+* **Phát triển giao diện người dùng:** Hoàn thiện và mở rộng frontend Next.js (React). Có thể giữ Streamlit cho các thử nghiệm nội bộ nếu cần, nhưng chính thức giao diện web sản phẩm là Next.js.
+* **Tối ưu hóa LLM:** Thử nghiệm với các mô hình nhỏ hơn (distilled models), caching và batching để giảm chi phí và độ trễ.
 * **Nghiên cứu dài hạn:** Thực hiện các thử nghiệm với người dùng thực tế để đánh giá tác động của hệ thống đến kết quả học tập.
+
