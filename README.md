@@ -171,6 +171,28 @@ Sau khi server chạy, truy cập:
 }
 ```
 
+## 🧰 Dev helper (start/stop logs)
+
+There's a convenient PowerShell helper at `scripts/start_dev.ps1` to start/stop backend and frontend and capture logs. Example usage:
+
+PowerShell:
+
+```powershell
+# Start both services (background)
+.\scripts\start_dev.ps1
+
+# Start backend in foreground (show logs directly)
+.\scripts\start_dev.ps1 -Foreground
+
+# Stop both services
+.\scripts\start_dev.ps1 -Stop
+
+# Tail logs
+Get-Content -Path .\backend\logs\backend_stdout.log -Wait -Tail 200
+Get-Content -Path .\frontend\logs\frontend_stdout.log -Wait -Tail 200
+```
+```
+
 ---
 
 ## 🔄 Quy Trình Xử Lý Dữ Liệu
