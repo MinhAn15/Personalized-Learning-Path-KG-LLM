@@ -795,6 +795,68 @@ def heuristic(node_id: str, driver, goal_tags: List[str], dynamic_weights: Dict,
     return h
 
 
+def calculate_dynamic_weights(student_id: str = None) -> Dict:
+    """Compute dynamic heuristic weights based on student profile.
+
+    Currently this function focuses on making the 'time_estimate' weight truly dynamic.
+    It reads the student's performance details (which encode time_spent per node in the
+    format 'node_id:score:time_spent') and computes an average time-per-node. The
+    returned `dynamic_weights['time_estimate']` is a scalar that will be multiplied by
+    Config.ASTAR_HEURISTIC_WEIGHTS["time_estimate"] inside `heuristic()`.
+
+    Behavior:
+    - If no student_id or no timing history is available, returns sensible defaults
+      (time_estimate scalar = 1.0).
+    - The scalar is computed as 60 / avg_time_spent (so avg_time=60 -> 1.0,
+      avg_time=30 -> 2.0, avg_time=120 -> 0.5) and then clamped to [0.2, 3.0].
+
+    This keeps the time term interpretable while allowing it to increase when a
+    student typically spends less time (so we prefer short nodes) and decrease when
+    they have more time available.
+    """
+    # Base dynamic weights copy (only keys used by heuristic)
+    dynamic = {
+        'difficulty_standard': float(Config.ASTAR_HEURISTIC_WEIGHTS.get('difficulty_standard', 0.0)),
+        'difficulty_advanced': float(Config.ASTAR_HEURISTIC_WEIGHTS.get('difficulty_advanced', 0.0)),
+        'skill_level': dict(Config.ASTAR_HEURISTIC_WEIGHTS.get('skill_level', {'default': 0.0})),
+        'time_estimate': 1.0
+    }
+
+    try:
+        if not student_id:
+            return dynamic
+
+        profile = load_student_profile(student_id)
+        if not profile:
+            return dynamic
+
+        perf = profile.get('performance_details', []) or []
+        times = []
+        for entry in perf:
+            # Expecting format: "node_id:score:time_spent"
+            try:
+                parts = str(entry).split(":")
+                if len(parts) >= 3:
+                    t = float(parts[2])
+                    if t > 0:
+                        times.append(t)
+            except Exception:
+                continue
+
+        if times:
+            avg_time = sum(times) / len(times)
+            # Build scalar such that avg_time=60 -> 1.0, avg_time small -> >1, avg_time large -> <1
+            scalar = 60.0 / max(1.0, avg_time)
+            # Clamp to avoid extreme influence
+            scalar = max(0.2, min(3.0, scalar))
+            dynamic['time_estimate'] = float(scalar)
+
+    except Exception as e:
+        logger.warning(f"calculate_dynamic_weights failed for student_id={student_id}: {e}")
+
+    return dynamic
+
+
 def a_star_custom(start_node: str, goal_node: str, driver, goal_tags: List[str], dynamic_weights: Dict, Config, context: str) -> List[str]:
     heuristic_cache = {}  # Bộ nhớ đệm heuristic
     open_set = []
@@ -954,8 +1016,8 @@ def generate_learning_path(student_id: str, level: str, start_node: str = None, 
         skill_levels = Config.ASTAR_SKILL_LEVELS_LOW if profile.get("current_level", 0.0) < Config.ASTAR_CURRENT_LEVEL_THRESHOLD else Config.ASTAR_SKILL_LEVELS_HIGH
         learning_style_filter = f" AND n.{Config.PROPERTY_LEARNING_STYLE_PREFERENCE} CONTAINS $learning_style_preference" if profile.get("learning_style_preference") else ""
 
-        # Tính trọng số động
-        dynamic_weights = calculate_dynamic_weights()
+    # Tính trọng số động (dựa trên hồ sơ học sinh nếu có)
+    dynamic_weights = calculate_dynamic_weights(student_id)
 
         # Kiểm tra sự tồn tại của đường dẫn từ start_node đến goal_node
         path_check_query = f"""
