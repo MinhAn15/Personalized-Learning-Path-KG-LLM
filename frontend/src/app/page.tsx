@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+// logo removed on request
 import { useEffect, useState, FormEvent } from "react";
 
 export default function Home() {
@@ -99,13 +99,33 @@ export default function Home() {
     } catch {}
   }
 
+  const pathNodes = (result && (result as any).path) ? (result as any).path as Array<any> : null;
+
   return (
     <div className="font-sans min-h-screen p-8 sm:p-20">
-      <main className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-4 mb-6">
-          <Image src="/next.svg" alt="Next" width={120} height={26} />
-          <h1 className="text-2xl font-semibold">Personalized Learning Path — Demo</h1>
-        </div>
+      {/* Use a two-column layout when we have result data */}
+      <div className={`flex ${pathNodes ? 'gap-8' : ''}`}>
+        {/* Left sidebar: only shown when we have path data */}
+        {pathNodes ? (
+          <aside className="w-64 shrink-0 bg-white border rounded p-4">
+            <h3 className="text-sm font-semibold mb-3">Generated Path (Goals)</h3>
+            <ul className="space-y-2 text-sm">
+              {pathNodes.map((n: any, idx: number) => (
+                <li key={n.id || idx} className="border rounded px-2 py-1">
+                  <div className="font-medium">{n.title || n.id}</div>
+                  {n.estimated_minutes != null && (
+                    <div className="text-xs text-gray-500">Est: {n.estimated_minutes} min</div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </aside>
+        ) : null}
+
+        <main className={`flex-1 ${pathNodes ? '' : 'max-w-2xl mx-auto'}`}>
+          <div className="mb-6">
+            <h1 className="text-2xl font-semibold">Personalized Learning Path — Demo</h1>
+          </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -185,7 +205,7 @@ export default function Home() {
               {loading ? "Generating…" : "Generate Path"}
             </button>
           </div>
-        </form>
+  </form>
 
         <section className="mt-8">
           <h2 className="text-lg font-medium">Result</h2>
@@ -195,7 +215,8 @@ export default function Home() {
           )}
           {!result && !error && <p className="text-sm text-muted mt-2">No result yet.</p>}
         </section>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

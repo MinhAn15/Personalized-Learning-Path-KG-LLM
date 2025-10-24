@@ -7,6 +7,7 @@ import threading
 
 # Import các hàm logic chính từ các module của bạn
 from .session_manager import run_learning_session
+from .session_store import create_session, get_session, update_session_path
 # Defer importing initialization function to avoid circular import at module load time
 
 # --- Khởi tạo ứng dụng và các kết nối ---
@@ -152,3 +153,102 @@ def generate_path_demo(request: LearningRequest):
     }
 
     return demo_response
+
+
+@app.get("/api/node/{node_id}")
+def get_node(node_id: str):
+    """Return basic node metadata from Neo4j if available.
+
+    This endpoint is tolerant: if the Neo4j driver isn't ready it returns an
+    informative error so the frontend can fall back to demo data.
+    """
+    try:
+        from . import config as _config
+        if not driver:
+            return {"status": "error", "message": "Neo4j not connected"}
+
+        # Use the Config.PROPERTY_ID name to build the query
+        from .config import Config
+        q = f"MATCH (n:KnowledgeNode {{{Config.PROPERTY_ID}: $node_id}}) RETURN n LIMIT 1"
+        records = []
+        try:
+            records = []
+            with driver.session(database="neo4j") as session:
+                res = session.run(q, node_id=node_id)
+                for r in res:
+                    records.append(r["n"])
+        except Exception as e:
+            return {"status": "error", "message": f"Query failed: {e}"}
+
+        if not records:
+            return {"status": "not_found", "message": f"Node {node_id} not found"}
+
+        node = records[0]
+        # Convert neo4j Node to dict safely
+        props = dict(node)
+        return {"status": "ok", "node": props}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.post("/api/session")
+def create_session_endpoint(request: LearningRequest):
+    """Create a demo session and immediately attempt to generate a path.
+
+    If Neo4j is available, this will call the real `generate_learning_path`
+    via `run_learning_session` logic; otherwise it will return a demo path.
+    """
+    try:
+        payload = request.dict()
+
+        # Create session placeholder
+        sess = create_session(payload)
+
+        # If driver available, try to generate a real path asynchronously (sync here
+        # for simplicity). If driver missing, return demo path structure.
+        if driver:
+            try:
+                # run_learning_session returns a dict with status/path
+                result = run_learning_session(
+                    student_id=payload.get("student_id"),
+                    level=payload.get("level"),
+                    context=payload.get("context"),
+                    learning_style=None,
+                    student_goal=payload.get("student_goal"),
+                    use_llm=payload.get("use_llm", False),
+                    driver=driver,
+                )
+                if result.get("status") == "success":
+                    update_session_path(sess["session_id"], result.get("path") or [])
+                    sess = get_session(sess["session_id"])
+                    return {"status": "ok", "session": sess}
+                else:
+                    # Return session with error message
+                    sess["status"] = "error"
+                    sess["error_message"] = result.get("error_message")
+                    return {"status": "error", "session": sess}
+            except Exception as e:
+                sess["status"] = "error"
+                sess["error_message"] = str(e)
+                return {"status": "error", "session": sess}
+        else:
+            # No driver: return demo path as in generate_path_demo
+            demo_path = [
+                {"id": "node-1", "title": "Introduction to SQL", "estimated_minutes": 20},
+                {"id": "node-2", "title": "SELECT and WHERE", "estimated_minutes": 30},
+                {"id": "node-3", "title": "GROUP BY and Aggregates", "estimated_minutes": 40},
+            ]
+            update_session_path(sess["session_id"], demo_path)
+            sess = get_session(sess["session_id"])
+            return {"status": "ok", "session": sess}
+
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@app.get("/api/session/{session_id}")
+def get_session_endpoint(session_id: str):
+    s = get_session(session_id)
+    if not s:
+        return {"status": "not_found", "message": "Session not found"}
+    return {"status": "ok", "session": s}
