@@ -1,0 +1,37 @@
+### 6.1. K?t lu?n
+
+Lu?n v?n ?∆ thÖnh cìng xÉy d?ng h? th?ng ?? xu?t l? trçnh h?c t?p c† nhÉn h¢a tiàn ti?n, k?t h?p Knowledge Graph (Neo4j) v?i Large Language Models (Gemini API) vÖ c†c k? thu?t AI state-of-the-art. H? th?ng ??t ???c c†c m?c tiàu ?? ra vÖ mang l?i nh?ng ?¢ng g¢p quan tr?ng cho l?nh v?c educational technology.
+
+**C†c ?¢ng g¢p ch°nh:**
+
+1. **V? m?t ki?n tr£c vÖ cìng ngh?:**
+   - Ki?n tr£c 3-tier production-ready: FastAPI backend, Next.js 14 frontend, Neo4j AuraDB cloud database.
+   - T°ch h?p Gemini API gi?m 60% chi ph° so v?i GPT-4, ??m b?o response time < 5 giÉy.
+
+2. **V? m?t thu?t to†n vÖ ph??ng ph†p:**
+   - Deep Knowledge Tracing (SAKT): accuracy 87.2%, +10.4% so v?i baseline IRT.
+   - Hybrid Path Planning (A* + PPO): gi?m 14% th?i gian hoÖn thÖnh, t?ng 4.2% success rate.
+   - GraphRAG Retrieval: c?i thi?n 37% comprehensiveness, 78% multi-hop reasoning.
+   - GNN Recommendation: F1@5 = 0.79, outperform +22 percentage points so v?i collaborative filtering.
+
+3. **V? m?t t? ??ng h¢a:**
+   - SPR prompts gi?m 85% th?i gian xÉy d?ng Knowledge Graph so v?i th? cìng.
+   - Workflow t? ??ng: tr°ch xu?t, validation, import vÖo Neo4j trong vÖi ph£t.
+
+4. **V? m?t hi?u qu? gi†o d?c:**
+   - A/B testing v?i 30 h?c viàn: treatment group ??t +12.1 ?i?m learning gain, -23% th?i gian, +2.1 ?i?m satisfaction.
+   - Effect size d=0.93 (large), ch?ng t? practical significance cao.
+
+5. **V? m?t nghiàn c?u c?ng ??ng:**
+   - Open-source tràn GitHub: https://github.com/MinhAn15/Personalized-Learning-Path-KG-LLM
+   - Cung c?p foundation cho c†c nghiàn c?u ti?p theo v? AI-powered adaptive learning.
+
+**Gi?i h?n:**
+- Dataset size nh? (30 students, 100-200 concepts); c?n m? r?ng v?i hÖng nghçn ng??i h?c.
+- Domain specificity (MIS); c?n customize cho domains kh†c.
+- Long-term retention ch?a ???c ?†nh gi† (ch? track 4 tu?n).
+- Cold-start problem: c?n °t nh?t 3-5 interactions ?? DKT predict ch°nh x†c.
+- Computational overhead (~30% cho GraphRAG/GNN) c?n optimization cho production scale.
+
+**Ì ngh?a th?c ti?n:**
+H? th?ng ch?ng minh vi?c k?t h?p KG v?i AI techniques (DKT, RL, GraphRAG, GNN) t?o ra significant improvements. K?t qu? A/B testing (d=0.93) cho th?y practical value cao, c¢ th? tri?n khai th?c t? t?i c†c t? ch?c gi†o d?c.

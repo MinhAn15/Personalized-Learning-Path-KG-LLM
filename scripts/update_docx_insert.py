@@ -54,6 +54,29 @@ def _parse_blocks(text: str):
         if not line.strip():
             i += 1
             continue
+        # Bullet list block starting with "- "
+        if line.strip().startswith("- "):
+            items = []
+            while i < n and lines[i].strip().startswith("- "):
+                items.append(lines[i].strip()[2:].strip())
+                i += 1
+            yield ("bullets", items)
+            continue
+        # Ordered list block like "1. ..."
+        stripped_line = line.strip()
+        if len(stripped_line) > 2 and stripped_line.split(".", 1)[0].isdigit() and stripped_line[len(stripped_line.split(".", 1)[0]):].startswith("."):
+            items = []
+            while i < n:
+                s = lines[i].strip()
+                if len(s) > 2 and s.split(".", 1)[0].isdigit() and s[len(s.split(".", 1)[0]):].startswith("."):
+                    # remove leading number and dot
+                    after_dot = s.split(".", 1)[1].strip()
+                    items.append(after_dot)
+                    i += 1
+                else:
+                    break
+            yield ("olist", items)
+            continue
         # Code fence block ``` (optionally with language tag)
         if line.strip().startswith("```"):
             # consume fence line and collect until closing fence
@@ -105,7 +128,7 @@ def _parse_blocks(text: str):
         # Paragraph: accumulate until blank line or another block
         para_lines = [line]
         i += 1
-        while i < n and lines[i].strip() and not lines[i].lstrip().startswith("### ") and not is_table_line(lines[i]) and not ((lines[i].strip().startsWith("```") if hasattr(lines[i].strip(), 'startsWith') else lines[i].strip().startswith("```")) or (lines[i].strip().startswith("\\[") and lines[i].strip().endswith("\\]")) or (lines[i].strip().startswith("[") and lines[i].strip().endswith("]"))):
+        while i < n and lines[i].strip() and not lines[i].lstrip().startswith("### ") and not is_table_line(lines[i]) and not (lines[i].strip().startswith("```") or (lines[i].strip().startswith("\\[") and lines[i].strip().endswith("\\]")) or (lines[i].strip().startswith("[") and lines[i].strip().endswith("]")) or lines[i].strip().startswith("- ") or (len(lines[i].strip()) > 2 and lines[i].strip().split(".", 1)[0].isdigit() and lines[i].strip()[len(lines[i].strip().split(".", 1)[0]):].startswith("."))):
             para_lines.append(lines[i])
             i += 1
         yield ("paragraph", " ".join(l.strip() for l in para_lines).strip())
@@ -136,6 +159,20 @@ def _insert_structured_after_anchor(doc: Document, text: str, anchor: str, occur
                 r = p.add_run(payload)
                 r.font.name = "Cambria Math"
                 r.font.size = Pt(12)
+            elif kind == "bullets":
+                for item in payload:
+                    p = doc.add_paragraph(item)
+                    try:
+                        p.style = "List Bullet"
+                    except Exception:
+                        pass
+            elif kind == "olist":
+                for item in payload:
+                    p = doc.add_paragraph(item)
+                    try:
+                        p.style = "List Number"
+                    except Exception:
+                        pass
             elif kind == "code":
                 # Insert code block as monospace lines
                 for j, line in enumerate(payload or []):
@@ -183,6 +220,24 @@ def _insert_structured_after_anchor(doc: Document, text: str, anchor: str, occur
             r.font.size = Pt(12)
             after_elem.addnext(p._element)
             after_elem = p._element
+        elif kind == "bullets":
+            for item in payload:
+                p = doc.add_paragraph(item)
+                try:
+                    p.style = "List Bullet"
+                except Exception:
+                    pass
+                after_elem.addnext(p._element)
+                after_elem = p._element
+        elif kind == "olist":
+            for item in payload:
+                p = doc.add_paragraph(item)
+                try:
+                    p.style = "List Number"
+                except Exception:
+                    pass
+                after_elem.addnext(p._element)
+                after_elem = p._element
         elif kind == "code":
             for j, line in enumerate(payload or []):
                 p = doc.add_paragraph()

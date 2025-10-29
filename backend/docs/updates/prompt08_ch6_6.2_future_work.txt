@@ -1,0 +1,48 @@
+### 6.2. H??ng ph t tri?n t??ng lai
+
+#### 6.2.1. M? r?ng quy m“ v… domains
+- Multi-domain KG: M? r?ng t? MIS sang Programming, Data Science, Business, Design.
+- Cross-domain relationships: Liˆn k?t tri th?c liˆn ng…nh (SQL ? Data Science ? Business Analytics).
+- Large-scale deployment: Pilot v?i 500-1000 h?c viˆn t?i c c tr??ng ??i h?c.
+- Multi-language support: Ti?ng Vi?t, English, Chinese, Japanese.
+
+#### 6.2.2. Nƒng cao AI models
+- Advanced DKT: Th? nghi?m SAINT, simpleKT; k?t h?p forgetting curves v… spaced repetition.
+- Multi-agent RL: Specialized agents (Content Selector, Difficulty Adjuster, Motivation, Time Manager).
+- Federated Learning: Train models phƒn t n, b?o v? privacy d? li?u h?c viˆn.
+
+#### 6.2.3. T¡ch h?p learning analytics nƒng cao
+- Real-time dashboards: Instructor/student/admin dashboards v?i metrics visualization.
+- Predictive analytics: D? ?o n dropout risk, final exam scores, optimal study schedule.
+- Explainable AI: Visual explanations (attention weights), counterfactual explanations, feature importance.
+
+#### 6.2.4. Gamification v… engagement
+- Achievement system: Badges, leaderboards, daily challenges.
+- Social learning: Peer recommendations, study groups, Q&A forums.
+- Adaptive content formats: Videos, interactive simulations, code exercises (auto-graded).
+
+#### 6.2.5. Mobile v… offline support
+- Mobile app: Native iOS/Android apps (React Native/Flutter).
+- Microlearning: 5-10 ph£t sessions cho mobile users.
+- Offline mode: Cache content locally, sync progress khi reconnect.
+
+#### 6.2.6. Integration v?i LMS hi?n c¢
+- LMS plugins: Moodle, Canvas, Google Classroom.
+- Standards compliance: SCORM export, xAPI tracking, OAuth/SAML single sign-on.
+
+#### 6.2.7. Advanced research directions
+- Curriculum optimization: S? d?ng process mining insights ?? redesign curriculum.
+- Automated assessment generation: Code exercises, essay questions, project prompts (beyond MCQs).
+- Metacognitive skill development: Track self-assessment accuracy, help-seeking behaviors, time management.
+- Transfer learning: Transfer knowledge gi?a c c domains, identify transferable skills.
+- Collaborative KG construction: Crowdsourcing t? instructors, peer review mechanism.
+
+#### 6.2.8. Ethical v… privacy considerations
+- Data privacy: GDPR/CCPA compliance, anonymization, right to be forgotten.
+- Bias mitigation: Audit models cho demographic biases, fairness metrics.
+- Transparency: Explainable recommendations, student control (opt-in/opt-out), data usage disclosure.
+
+T…i li?u nˆn cite:
+- Frontiers in Education (2024): "Crafting personalized learning paths with AI for lifelong learning: A systematic literature review".
+- arXiv:2305.04475 (2023): "Adaptive Learning Path Navigation Based on Knowledge Tracing and Reinforcement Learning".
+- SAGE Journals (2025): "Personalized learning path planning and optimization: A systematic review".
