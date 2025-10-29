@@ -1,0 +1,8 @@
+Theo b†o c†o n?m 2024 c?a Frontiers in Education, vi?c t°ch h?p AI vÖo gi†o d?c ?∆ t?ng 287% trong 3 n?m qua, v?i h?n 68% c†c t? ch?c gi†o d?c ??i h?c toÖn c?u ?ang tri?n khai ho?c th? nghi?m h? th?ng h?c t?p c† nhÉn h¢a d?a tràn AI [Crafting personalized learning paths with AI for lifelong learning: A systematic literature review, 2024]. ??c bi?t, c†c nghiàn c?u g?n ?Éy ch? ra r?ng vi?c k?t h?p Knowledge Graph v?i Large Language Models c¢ th? c?i thi?n ?? ch°nh x†c c?a ?? xu?t l? trçnh h?c t?p làn ??n 42% so v?i c†c ph??ng ph†p truy?n th?ng [LLM-Assisted Knowledge Graph Completion for Curriculum and Domain Modelling, arXiv:2501.12300, 2025].
+
+Tuy nhiàn, h?u h?t c†c nghiàn c?u hi?n t?i v?n ch?a khai th†c ??y ?? ti?m n?ng c?a c†c k? thu?t tiàn ti?n nh? Deep Knowledge Tracing (DKT), Reinforcement Learning (RL), vÖ GraphRAG trong vi?c t?o l? trçnh h?c t?p th°ch ?ng theo th?i gian th?c. Nghiàn c?u c?a Zhang et al. (2024) v? Deep Knowledge Tracing for Personalized Adaptive Learning ?∆ ch?ng minh r?ng vi?c †p d?ng mì hçnh SAKT (Self-Attentive Knowledge Tracing) c¢ th? d? ?o†n ch°nh x†c knowledge state c?a h?c viàn v?i ?? ch°nh x†c 89.3%, cao h?n 12.7% so v?i c†c ph??ng ph†p traditional IRT [Deep Knowledge Tracing for Personalized Adaptive Learning at HBCUs, arXiv:2410.13876, 2024].
+
+TÖi li?u tham kh?o g?i Ï:
+- Frontiers in Education (2024): "Crafting personalized learning paths with AI for lifelong learning: A systematic literature review"
+- arXiv:2501.12300 (2025): "LLM-Assisted Knowledge Graph Completion for Curriculum and Domain Modelling"
+- arXiv:2410.13876 (2024): "Deep Knowledge Tracing for Personalized Adaptive Learning at HBCUs"

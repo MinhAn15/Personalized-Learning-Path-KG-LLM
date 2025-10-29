@@ -1,0 +1,42 @@
+### 2.2.3. Deep Knowledge Tracing (DKT)
+
+Deep Knowledge Tracing lÖ m?t ph??ng ph†p s? d?ng deep learning ?? theo d‰i vÖ d? ?o†n knowledge state (tr?ng th†i tri th?c) c?a h?c viàn qua th?i gian. Kh†c v?i c†c ph??ng ph†p truy?n th?ng nh? Item Response Theory (IRT) hay Bayesian Knowledge Tracing (BKT), DKT s? d?ng Recurrent Neural Networks (RNN) ho?c Transformer ?? mì hçnh h¢a qu† trçnh h?c t?p.
+
+C†c mì hçnh DKT tiàn ti?n:
+
+1. Self-Attentive Knowledge Tracing (SAKT)
+SAKT (Pandey & Karypis, 2019) s? d?ng self-attention mechanism ?? mì hçnh h¢a quan h? gi?a c†c bÖi t?p (exercises) trong qu† kh? vÖ hi?n t?i. Mì hçnh nÖy ??t accuracy 89.3% tràn dataset ASSISTments, cao h?n 12.7% so v?i traditional IRT models [arXiv:2410.13876, 2024].
+
+Cìng th?c attention:
+[Attention(Q, K, V) = softmax((QK^T) / sqrt(d_k)) V]
+
+2. Dynamic Key-Value Memory Networks (DKVMN)
+DKVMN s? d?ng external memory ?? l?u knowledge state t?ng concept. G?m: Key matrix (M_k) l?u concepts, Value matrix (M_v) l?u mastery levels.
+
+3. Knowledge Query Network (KQN)
+KQN c?i ti?n DKVMN b?ng c? ch? query ?? truy xu?t relevant knowledge states.
+
+?ng d?ng trong h? th?ng: `backend/src/knowledge_tracing.py` dóng SAKT ?? d? ?o†n x†c su?t tr? l?i ?£ng, ??c l??ng mastery level cho m?i concept, vÖ k°ch ho?t can thi?p (intervention) khi c?n. Mastery c?p nh?t v?i cìng th?c decay:
+
+[M_{t+1}(c) = M_t(c) ˙ e^{-? ?t} + ? ˙ P_t]
+Trong ?¢:
+- [M_t(c)]: Mastery c?a concept t?i th?i ?i?m t
+- [?]: Decay rate
+- [?t]: Th?i gian t? l?n h?c tr??c
+- [?]: Learning rate
+- [P_t]: ?i?m s? hi?u su?t
+
+B?ng 2.1: So s†nh accuracy c†c DKT models
+| Model           | Accuracy | AUC  | Training Time |
+|-----------------|----------|------|---------------|
+| IRT             | 76.6%    | 0.72 | -             |
+| DKT (vanilla)   | 82.1%    | 0.78 | 2.5h          |
+| SAKT            | 89.3%    | 0.87 | 4.1h          |
+| DKVMN           | 85.7%    | 0.83 | 3.3h          |
+| KQN             | 87.2%    | 0.85 | 3.8h          |
+
+TÖi li?u tham kh?o (m?c nÖy):
+- Pandey & Karypis (2019): A Self-Attentive model for Knowledge Tracing.
+- Zhang et al. (2024): Deep Knowledge Tracing for Personalized Adaptive Learning at HBCUs (arXiv:2410.13876).
+- Lee et al. (2019): Knowledge Query Network for Knowledge Tracing.
+- PMC (2025): Deep learning based knowledge tracing in intelligent education.

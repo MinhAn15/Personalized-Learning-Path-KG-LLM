@@ -1,0 +1,40 @@
+### 2.2.4. Reinforcement Learning cho Adaptive Learning Path Planning
+
+Reinforcement Learning (RL) lÖ m?t paradigm trong machine learning, trong ?¢ agent h?c ch°nh s†ch quy?t ??nh t?i ?u thìng qua feedback d?ng reward.
+
+C†c thu?t to†n RL ch°nh:
+
+1. Deep Q-Network (DQN)
+C?p nh?t Q-learning:
+[Q(s_t, a_t) ? Q(s_t, a_t) + ? ( r_t + ? max_{a'} Q(s_{t+1}, a') ? Q(s_t, a_t) )]
+
+Thi?t l?p trong h? th?ng:
+- State: H? s? h?c viàn (n?ng l?c hi?n t?i, mastery theo concept, ti?n ??, th?i gian g?n nh?t, v.v.).
+- Action: Ch?n concept ti?p theo.
+- Reward: M?c c?i thi?n mastery ho?c gi?m th?i gian hoÖn thÖnh.
+
+2. Proximal Policy Optimization (PPO)
+PPO lÖ policy gradient v?i clipped objective:
+[L^{CLIP}(?) = E_t [ min( r_t(?) ∂_t, clip(r_t(?), 1??, 1+?) ∂_t ) ] ]
+
+3. Time-Aware RL
+C? ch? ch£ Ï theo th?i gian (time-aware attention) cÉn nh?c y?u t? th?i gian:
+[?_i = exp( score(s_t, a_i) + ? t_i ) / ?_j exp( score(s_t, a_j) + ? t_j )]
+
+?ng d?ng trong h? th?ng: `backend/src/adaptive_path_planner.py` †p d?ng hybrid A* cho l? trçnh ch°nh vÖ PPO cho t?i ?u c?c b? d?a tràn ph?n h?i h?c viàn.
+
+So s†nh hi?u qu? (IEEE 2025): Approaches d?a tràn RL t?ng learning efficiency ~+23%, retention rate ~+18%, vÖ satisfaction ~+1.6 ?i?m so v?i baseline.
+
+B?ng 2.2: So s†nh RL algorithms
+| Algorithm       | Learning Efficiency | Convergence Speed | Stability |
+|-----------------|---------------------|-------------------|-----------|
+| Q-Learning      | Moderate            | Slow              | Low       |
+| DQN             | High                | Moderate          | Moderate  |
+| PPO             | Very High           | Fast              | High      |
+| Time-Aware PPO  | Very High           | Fast              | Very High |
+
+TÖi li?u tham kh?o (m?c nÖy):
+- Mnih et al. (2015): Human-level control through deep reinforcement learning (Nature).
+- Schulman et al. (2017): Proximal Policy Optimization Algorithms.
+- ACM (2025): Personalized Learning Path Recommendation with Time-Aware Attention.
+- IEEE (2025): Application of Reinforcement Learning in Personalized Learning Path Recommendation in Secondary Education Management.
