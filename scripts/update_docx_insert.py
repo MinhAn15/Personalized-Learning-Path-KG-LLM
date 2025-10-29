@@ -23,6 +23,9 @@ from docx import Document  # type: ignore
 from docx.enum.text import WD_ALIGN_PARAGRAPH  # type: ignore
 from docx.shared import Pt  # type: ignore
 
+# Safe default font for general text to avoid locale-specific rendering issues
+SAFE_FONT = "Times New Roman"
+
 
 def _normalize(s: str) -> str:
     import re
@@ -152,7 +155,14 @@ def _insert_structured_after_anchor(doc: Document, text: str, anchor: str, occur
         # Append at end
         for kind, payload in _parse_blocks(text):
             if kind == "heading":
-                doc.add_paragraph(payload).style = "Heading 3"
+                p = doc.add_paragraph()
+                try:
+                    p.style = "Heading 3"
+                except Exception:
+                    pass
+                r = p.add_run(payload)
+                # Use safe font for body text
+                r.font.name = SAFE_FONT
             elif kind == "equation":
                 p = doc.add_paragraph()
                 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -161,14 +171,18 @@ def _insert_structured_after_anchor(doc: Document, text: str, anchor: str, occur
                 r.font.size = Pt(12)
             elif kind == "bullets":
                 for item in payload:
-                    p = doc.add_paragraph(item)
+                    p = doc.add_paragraph()
+                    r = p.add_run(item)
+                    r.font.name = SAFE_FONT
                     try:
                         p.style = "List Bullet"
                     except Exception:
                         pass
             elif kind == "olist":
                 for item in payload:
-                    p = doc.add_paragraph(item)
+                    p = doc.add_paragraph()
+                    r = p.add_run(item)
+                    r.font.name = SAFE_FONT
                     try:
                         p.style = "List Number"
                     except Exception:
@@ -186,7 +200,10 @@ def _insert_structured_after_anchor(doc: Document, text: str, anchor: str, occur
                     continue
                 cols = len(rows[0])
                 t = doc.add_table(rows=0, cols=cols)
-                t.style = "Table Grid"
+                try:
+                    t.style = "Table Grid"
+                except Exception:
+                    pass
                 # header
                 hdr = t.add_row().cells
                 for j in range(cols):
@@ -197,7 +214,9 @@ def _insert_structured_after_anchor(doc: Document, text: str, anchor: str, occur
                     for j in range(cols):
                         cells[j].text = data_row[j] if j < len(data_row) else ""
             else:
-                doc.add_paragraph(payload)
+                p = doc.add_paragraph()
+                r = p.add_run(payload)
+                r.font.name = SAFE_FONT
         return False
 
     # Insert after anchor paragraph by moving created elements next to anchor
@@ -205,11 +224,13 @@ def _insert_structured_after_anchor(doc: Document, text: str, anchor: str, occur
     after_elem = anchor_p._element
     for kind, payload in _parse_blocks(text):
         if kind == "heading":
-            p = doc.add_paragraph(payload)
+            p = doc.add_paragraph()
             try:
                 p.style = "Heading 3"
             except Exception:
                 pass
+            r = p.add_run(payload)
+            r.font.name = SAFE_FONT
             after_elem.addnext(p._element)
             after_elem = p._element
         elif kind == "equation":
@@ -222,7 +243,9 @@ def _insert_structured_after_anchor(doc: Document, text: str, anchor: str, occur
             after_elem = p._element
         elif kind == "bullets":
             for item in payload:
-                p = doc.add_paragraph(item)
+                p = doc.add_paragraph()
+                r = p.add_run(item)
+                r.font.name = SAFE_FONT
                 try:
                     p.style = "List Bullet"
                 except Exception:
@@ -231,7 +254,9 @@ def _insert_structured_after_anchor(doc: Document, text: str, anchor: str, occur
                 after_elem = p._element
         elif kind == "olist":
             for item in payload:
-                p = doc.add_paragraph(item)
+                p = doc.add_paragraph()
+                r = p.add_run(item)
+                r.font.name = SAFE_FONT
                 try:
                     p.style = "List Number"
                 except Exception:
@@ -266,7 +291,9 @@ def _insert_structured_after_anchor(doc: Document, text: str, anchor: str, occur
             after_elem.addnext(t._element)
             after_elem = t._element
         else:
-            p = doc.add_paragraph(payload)
+            p = doc.add_paragraph()
+            r = p.add_run(payload)
+            r.font.name = SAFE_FONT
             after_elem.addnext(p._element)
             after_elem = p._element
     return True
