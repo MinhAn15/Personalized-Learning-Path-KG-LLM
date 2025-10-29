@@ -7,12 +7,23 @@ import threading
 
 # Import các hàm logic chính từ các module của bạn
 from .session_manager import run_learning_session
-from .session_store import create_session, get_session, update_session_path
+from .session_store import (
+    append_chat_message,
+    create_session,
+    get_chat_history,
+    get_session,
+    update_session_metadata,
+    update_session_path,
+)
+from .graph_recommender import GraphRecommender
+from .chat_service import ChatService
 # Defer importing initialization function to avoid circular import at module load time
 
 # --- Khởi tạo ứng dụng và các kết nối ---
 app = FastAPI()
 driver = None
+graph_recommender: GraphRecommender | None = None
+chat_service = ChatService()
 logger = logging.getLogger(__name__)
 
 # Cấu hình CORS để cho phép frontend (chạy ở port 3000) gọi tới
@@ -37,14 +48,18 @@ def startup_event():
         from .main import initialize_connections_and_settings
 
         def _init_bg():
-            global driver
+            global driver, graph_recommender, chat_service
             try:
                 d = initialize_connections_and_settings()
                 driver = d
+                graph_recommender = GraphRecommender(driver)
+                chat_service.set_driver(driver)
                 logger.info("Khởi tạo API thành công (background).")
             except Exception as e:
                 logger.error(f"Lỗi nghiêm trọng khi khởi tạo API trong background: {e}")
                 driver = None
+                graph_recommender = None
+                chat_service.set_driver(None)
 
         threading.Thread(target=_init_bg, daemon=True).start()
         logger.info("Bắt đầu khởi tạo kết nối trong background.")
@@ -106,6 +121,19 @@ class LearningRequest(BaseModel):
     student_goal: str
     use_llm: bool = False
 
+
+class NextConceptRequest(BaseModel):
+    student_id: str
+    top_k: int = 5
+
+
+class ChatRequest(BaseModel):
+    message: str
+    session_id: str | None = None
+    learner_id: str | None = None
+    context: str | None = None
+    goal: str | None = None
+
 # --- Định nghĩa các API Endpoints ---
 @app.get("/")
 def read_root():
@@ -153,6 +181,102 @@ def generate_path_demo(request: LearningRequest):
     }
 
     return demo_response
+
+
+@app.post("/api/recommend_next_concept")
+def recommend_next_concept(request: NextConceptRequest):
+    global graph_recommender
+    if not driver:
+        return {"status": "error", "message": "Neo4j not connected"}
+    if graph_recommender is None:
+        graph_recommender = GraphRecommender(driver)
+    try:
+        payload = graph_recommender.recommend_next_concept(request.student_id, request.top_k)
+        return {"status": "ok", **payload}
+    except Exception as exc:
+        logger.exception("Failed to generate next concept recommendation")
+        return {"status": "error", "message": str(exc)}
+
+
+@app.post("/api/chat")
+def chat_endpoint(request: ChatRequest):
+    global chat_service
+    try:
+        session = get_session(request.session_id) if request.session_id else None
+        if not session:
+            session = create_session(
+                {
+                    "source": "chat",
+                    "learner_id": request.learner_id,
+                    "student_id": request.learner_id,
+                    "context": request.context,
+                    "goal": request.goal,
+                    "student_goal": request.goal,
+                }
+            )
+
+        session_id = session["session_id"]
+
+        metadata_updates: Dict[str, Any] = {}
+        if request.learner_id:
+            metadata_updates["learner_id"] = request.learner_id
+            metadata_updates.setdefault("student_id", request.learner_id)
+        if request.context:
+            metadata_updates["context"] = request.context
+        if request.goal:
+            metadata_updates["goal"] = request.goal
+            metadata_updates.setdefault("student_goal", request.goal)
+        if metadata_updates:
+            update_session_metadata(session_id, metadata_updates)
+            session = get_session(session_id) or session
+
+        append_chat_message(
+            session_id,
+            "user",
+            request.message,
+            {
+                "learner_id": request.learner_id,
+                "context": request.context,
+                "goal": request.goal,
+            },
+        )
+
+        reply_payload = chat_service.generate_reply(
+            session,
+            request.message,
+            {
+                "learner_id": request.learner_id,
+                "context": request.context,
+                "goal": request.goal,
+            },
+        )
+
+        append_chat_message(
+            session_id,
+            "assistant",
+            reply_payload["reply"],
+            {
+                "model": reply_payload.get("model"),
+                "fallback": reply_payload.get("fallback"),
+            },
+        )
+
+        history = get_chat_history(session_id, limit=30) or []
+
+        return {
+            "status": "ok",
+            "session_id": session_id,
+            "reply": reply_payload["reply"],
+            "chat_history": history,
+            "supporting_nodes": reply_payload.get("supporting_nodes", []),
+            "summary": reply_payload.get("summary"),
+            "context": reply_payload.get("context"),
+            "model": reply_payload.get("model"),
+            "fallback": reply_payload.get("fallback"),
+        }
+    except Exception as exc:
+        logger.exception("Chat endpoint failed")
+        return {"status": "error", "message": str(exc)}
 
 
 @app.get("/api/node/{node_id}")

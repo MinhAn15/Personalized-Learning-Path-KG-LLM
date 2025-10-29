@@ -1,110 +1,199 @@
-### Sparse Priming Representation (SPR) Compression Prompt
+### Sparse Priming Representation (SPR) Compression Prompt### Sparse Priming Representation (SPR) Compression Prompt
 
-**Use this prompt for attached document and output csv file only, no explain.**
 
-**Control Parameters**:
-- Set `temperature` to 0.1 to minimize randomness and prioritize high-probability outputs.
-- Set `seed` to 42 to ensure reproducibility of results across multiple runs.
-- Set `top_k` to 5 to limit sampling to the top 5 most probable tokens, reducing variability.
-- Set `top_p` to 0.3 to balance high precision and a little diversity in token selection.
-- Set `presence_penalty` to 0.1 to discourage repetition in generated properties.
-- Set `frequency_penalty` to 0.1 to reduce overuse of frequent tokens.
-- Set `domain_hint` to "education" to guide the model toward educational context understanding.
 
-**Control Parameters transcript**: "Please provide a detailed and comprehensive answer strictly focused on educational topics. Prioritize high-confidence, factual information, and ensure the response is accurate and reliable. Include a variety of phrasing and examples where appropriate to maintain natural flow and depth. Use common educational terms naturally without overusing them, and ensure the response is structured to fit the requirements following."
+**Purpose**: Transform a single attached educational document into two CSV files (`nodes.csv`, `relationships.csv`) that follow the adaptive learning Knowledge Graph schema. Return CSV text only?no prose explanations.**Use this prompt for attached document and output csv file only, no explain.**
 
-#### MISSION
+
+
+**Control Parameters****Control Parameters**:
+
+- `temperature = 0.1`- Set `temperature` to 0.1 to minimize randomness and prioritize high-probability outputs.
+
+- `seed = 42`- Set `seed` to 42 to ensure reproducibility of results across multiple runs.
+
+- `top_k = 5`- Set `top_k` to 5 to limit sampling to the top 5 most probable tokens, reducing variability.
+
+- `top_p = 0.3`- Set `top_p` to 0.3 to balance high precision and a little diversity in token selection.
+
+- `presence_penalty = 0.1`- Set `presence_penalty` to 0.1 to discourage repetition in generated properties.
+
+- `frequency_penalty = 0.1`- Set `frequency_penalty` to 0.1 to reduce overuse of frequent tokens.
+
+- `domain_hint = "education"`- Set `domain_hint` to "education" to guide the model toward educational context understanding.
+
+
+
+**Control Transcript**: "Provide a precise, education-focused response that satisfies all schema rules and emphasizes high-confidence facts."**Control Parameters transcript**: "Please provide a detailed and comprehensive answer strictly focused on educational topics. Prioritize high-confidence, factual information, and ensure the response is accurate and reliable. Include a variety of phrasing and examples where appropriate to maintain natural flow and depth. Use common educational terms naturally without overusing them, and ensure the response is structured to fit the requirements following."
+
+
+
+---#### MISSION
+
 You are a Sparse Priming Representation (SPR) compressor designed for advanced NLP, NLU, and NLG tasks, optimized for Large Language Models (LLMs). Your task is to process text from a single attached document (e.g., a research paper or textbook chapter), render it as an SPR, and convert it into a structured CSV format for a Knowledge Graph (KG) focused on adaptive learning systems. The output will consist of two separate CSV files:
 
-- `nodes.csv`: Contains all nodes with mandatory columns: `Document_ID`, `Node_ID`, `Node_Label`, `Sanitized_Concept`, `Context`, `Definition`, `Example`, `Learning_Objective`, `Skill_Level`, `Time_Estimate`, `Difficulty`, `Priority`, `Prerequisites`, `Semantic_Tags`, `Focused_Semantic_Tags`, and optional dynamic columns for additional properties (e.g., `Numerical_Data`, `Real_World_Application`).
+## Mission
+
+Generate Sparse Priming Representations that populate a Neo4j-ready Knowledge Graph for personalized learning. Always output both CSVs, using ?Not Available? only when the document provides no evidence and reasonable inference is impossible.- `nodes.csv`: Contains all nodes with mandatory columns: `Document_ID`, `Node_ID`, `Node_Label`, `Sanitized_Concept`, `Context`, `Definition`, `Example`, `Learning_Objective`, `Skill_Level`, `Time_Estimate`, `Difficulty`, `Priority`, `Prerequisites`, `Semantic_Tags`, `Focused_Semantic_Tags`, and optional dynamic columns for additional properties (e.g., `Numerical_Data`, `Real_World_Application`).
+
 - `relationships.csv`: Contains all relationships with columns: `Document_ID`, `Source_Node_ID`, `Relationship_Type`, `Target_Node_ID`, `Weight`, `Dependency`.
+
+---
 
 These files will enable dynamic Knowledge Graph creation, import into Neo4j Desktop, and integration with tools for learning path recommendations, multiple-choice question (MCQ) assessments, and dynamic remediation.
 
+## Three-Layer Extraction Workflow
+
 #### INPUT
-- **Text Input**: Text from a single attached document. If the document contains tables or images, convert them to text where possible or mark non-extractable sections as 'Not Extractable'.
 
-#### OUTPUT
-- **Two CSV Files**:
-  1. `nodes.csv`: Structured with the specified columns. If a property is not found in the document, mark it as "Not Available".
-  2. `relationships.csv`: Structured with the specified columns.
-Where appropriate, infer values from context (e.g., estimate Time_Estimate based on content length). 
-If a property is not explicitly found in the document, infer a reasonable value based on the context or educational standards.
-If inference is not possible, retain 'Not Available'. For properties like Time_Estimate, use default values if applicable (e.g., '30' for simple concepts, '60' for complex ones). 
+### Layer 1 ? Concept Extraction- **Text Input**: Text from a single attached document. If the document contains tables or images, convert them to text where possible or mark non-extractable sections as 'Not Extractable'.
 
-#### PROCESS
-Analyze and distill the document’s content into succinct statements, assertions, associations, and concepts using a structured, three-layered extraction approach (Core Concept Extraction, Contextual and Relational Data Extraction, Enhanced Properties and Validation) to maximize information capture while ensuring scientific rigor and practical feasibility.
+- Identify core educational units (concepts, lessons, quizzes, experiments, topics, resources).
+
+- Set `Node_Label` from {Concept, Lesson, Quiz, Experiment, Topic, Resource}.#### OUTPUT
+
+- Build `Sanitized_Concept` in lower snake_case; construct `Node_ID = Node_Label:Sanitized_Concept`.- **Two CSV Files**:
+
+- Capture `Definition`, `Example`, `Context`, `Learning_Objective`, `Skill_Level` (Bloom), `Time_Estimate` (minutes), `Difficulty` (STANDARD or ADVANCED), `Priority` (1-5), and `Prerequisites` (comma-separated Node_ID list or ?Not Available?).  1. `nodes.csv`: Structured with the specified columns. If a property is not found in the document, mark it as "Not Available".
+
+- Prioritize concepts emphasized in headings, repeated sections, abstracts, or conclusions.  2. `relationships.csv`: Structured with the specified columns.
+
+Where appropriate, infer values from context (e.g., estimate Time_Estimate based on content length).
+
+### Layer 2 ? Context & Relation EnrichmentIf a property is not explicitly found in the document, infer a reasonable value based on the context or educational standards.
+
+- Derive contextual attributes, numerical evidence, remediation pathways, and any dynamic properties needed for instruction.If inference is not possible, retain 'Not Available'. For properties like Time_Estimate, use default values if applicable (e.g., '30' for simple concepts, '60' for complex ones).
+
+- Produce exactly 20 alphabetized `Semantic_Tags` per node covering core meaning, contextual links, and extended associations; supplement with ontology lookups if the document provides fewer terms.
+
+- Produce 3?5 alphabetized `Focused_Semantic_Tags` that align tightly with the definition and context; include the core concept.#### PROCESS
+
+- Detect relationships limited to {REQUIRES, IS_PREREQUISITE_OF, NEXT, REMEDIATES, HAS_ALTERNATIVE_PATH, SIMILAR_TO, IS_SUBCONCEPT_OF}. Assign Weight (1-5) and Dependency (1-5) using documented importance and reliance scales. Create symmetric counterparts when justified.Analyze and distill the document’s content into succinct statements, assertions, associations, and concepts using a structured, three-layered extraction approach (Core Concept Extraction, Contextual and Relational Data Extraction, Enhanced Properties and Validation) to maximize information capture while ensuring scientific rigor and practical feasibility.
+
+- Populate optional `Key_Property_X` / `Value_X` pairs (e.g., Numerical_Data, Real_World_Application, Learning_Tips, Detailed_Example, Reference, Learning_Style_Preference, Instruction_Content_Template, MCQ_Template, Correct_Answer, Remediation_Path, Source_Section, Multimedia_Resources, Node_Category, Socratic_Inference). Use Socratic questioning to infer abstract concept insights when supported.
 
 ---
 
-##### Extraction Process
-Adopt a structured, three-layered extraction approach to ensure comprehensive and verifiable information extraction:
+### Layer 3 ? Validation & Consistency
 
----
+- Cross-check every extracted value against document content, educational standards, and ontology references.##### Extraction Process
+
+- Enforce CSV schemas exactly: field order, quoting, separators, and consistent `Document_ID` across files.Adopt a structured, three-layered extraction approach to ensure comprehensive and verifiable information extraction:
+
+- Verify `Semantic_Tags` count is 20 and `Focused_Semantic_Tags` count is 3?5; adjust via inference or set ?Not Available?.
+
+- Ensure relationships reference valid nodes and reflect evidence-supported or well-justified inferences.---
+
+- Confirm numerical estimates (`Time_Estimate`, weights, dependencies) align with the complexity and sequencing described.
 
 ###### Layer 1: Core Concept Extraction
-- **Objective**: Identify and extract core concepts, their definitions, and examples to form foundational nodes of the Knowledge Graph. Assign Node_Label dynamically based on content type. If multiple concepts are identified, prioritize the one appearing in titles, subtitles, or with the highest frequency. If still unclear, choose the concept with the clearest definition or example in the document.
+
+---- **Objective**: Identify and extract core concepts, their definitions, and examples to form foundational nodes of the Knowledge Graph. Assign Node_Label dynamically based on content type. If multiple concepts are identified, prioritize the one appearing in titles, subtitles, or with the highest frequency. If still unclear, choose the concept with the clearest definition or example in the document.
+
 Ensure the selected concept represents the document's main content by verifying its relevance to key sections (e.g., abstract, conclusion)
-  - Assign Node_Label from the following types based on content:
-    - `Concept`: Fundamental theoretical or practical ideas (e.g., 'mean', 'variables'). Example: If the document states 'Mean is the arithmetic average,' assign Node_Label = 'Concept'.
-    - `Lesson`: Specific learning units (e.g., 'Lesson 1: Introduction to Statistics'). Example: If the document outlines 'Chapter 2: Statistical Measures,' assign Node_Label = 'Lesson'.
-    - `Quiz`: Assessment activities (e.g., 'Quiz on Central Tendency'). Example: If the document mentions 'Test your knowledge on mean and median,' assign Node_Label = 'Quiz'.
-    - `Experiment`: Hands-on activities (e.g., 'Experiment with Data Sets'). Example: If the document describes 'Calculate mean from a sample dataset,' assign Node_Label = 'Experiment'.
-    - `Topic`: Broader themes encompassing multiple concepts (e.g., 'Data Analysis' includes 'mean', 'median'). Example: If the document states 'Data Analysis includes various methods,' assign Node_Label = 'Topic'.
-    - `Resource`: Supplementary materials (e.g., 'Video on Mean Calculation'). Example: If the document references 'Watch this video on averages,' assign Node_Label = 'Resource'.
-  - Use diverse labels to differentiate content types for learning path design.
-- **Prioritization**:
-  - Prioritize concepts that appear in titles, subtitles, or have high frequency in the document.
-  - If multiple concepts are identified, select the one with the highest frequency or most mentions in key sections (e.g., abstract, introduction).
-- **Validation**:
-  - Cross-check extracted concepts with document titles, subtitles, and frequency of occurrence to ensure they are significant and representative.
-  - Ensure the selected concept represents the document's main content by verifying its relevance to key sections (e.g., abstract, introduction, conclusion).
-  - Validate Node_Label by checking alignment with the content's purpose (e.g., theoretical discussion for 'Concept', instructional activity for 'Lesson').
-- **Handling Complex Concepts**:
+
+## Node Property Reference  - Assign Node_Label from the following types based on content:
+
+- `Document_ID`: Stable identifier (e.g., filename stem) shared across files.    - `Concept`: Fundamental theoretical or practical ideas (e.g., 'mean', 'variables'). Example: If the document states 'Mean is the arithmetic average,' assign Node_Label = 'Concept'.
+
+- `Node_Label`: One of the six permitted labels.    - `Lesson`: Specific learning units (e.g., 'Lesson 1: Introduction to Statistics'). Example: If the document outlines 'Chapter 2: Statistical Measures,' assign Node_Label = 'Lesson'.
+
+- `Sanitized_Concept`: Unique snake_case token for the concept.    - `Quiz`: Assessment activities (e.g., 'Quiz on Central Tendency'). Example: If the document mentions 'Test your knowledge on mean and median,' assign Node_Label = 'Quiz'.
+
+- `Context`: Specific subdomain from headings or section cues.    - `Experiment`: Hands-on activities (e.g., 'Experiment with Data Sets'). Example: If the document describes 'Calculate mean from a sample dataset,' assign Node_Label = 'Experiment'.
+
+- `Definition`: Concise, evidence-backed statement.    - `Topic`: Broader themes encompassing multiple concepts (e.g., 'Data Analysis' includes 'mean', 'median'). Example: If the document states 'Data Analysis includes various methods,' assign Node_Label = 'Topic'.
+
+- `Example`: Clear illustration from the text; otherwise ?Not Available?.    - `Resource`: Supplementary materials (e.g., 'Video on Mean Calculation'). Example: If the document references 'Watch this video on averages,' assign Node_Label = 'Resource'.
+
+- `Learning_Objective`: Explicit or well-supported instructional goal.  - Use diverse labels to differentiate content types for learning path design.
+
+- `Skill_Level`: Bloom level (Remember/Understand/Apply/Analyze/Evaluate/Create).- **Prioritization**:
+
+- `Time_Estimate`: 5?15 for basics, 15?30 for moderate topics, 30?60 for complex topics unless the document suggests otherwise.  - Prioritize concepts that appear in titles, subtitles, or have high frequency in the document.
+
+- `Difficulty`: STANDARD for introductory content, ADVANCED when substantial prior knowledge is needed.  - If multiple concepts are identified, select the one with the highest frequency or most mentions in key sections (e.g., abstract, introduction).
+
+- `Priority`: 1?5 based on emphasis, prerequisite role, and curricular importance.- **Validation**:
+
+- `Prerequisites`: Comma-separated Node_IDs aligned with REQUIRES/IS_PREREQUISITE_OF links.  - Cross-check extracted concepts with document titles, subtitles, and frequency of occurrence to ensure they are significant and representative.
+
+- `Semantic_Tags`: Exactly 20 semicolon-separated tags, alphabetized.  - Ensure the selected concept represents the document's main content by verifying its relevance to key sections (e.g., abstract, introduction, conclusion).
+
+- `Focused_Semantic_Tags`: 3?5 semicolon-separated tags, alphabetized, including the core concept.  - Validate Node_Label by checking alignment with the content's purpose (e.g., theoretical discussion for 'Concept', instructional activity for 'Lesson').
+
+- Dynamic properties: Only add when supported; keep key names descriptive and values concise.- **Handling Complex Concepts**:
+
   - For abstract or multi-meaning concepts (e.g., "critical thinking"), create context-specific sub-nodes (e.g., `concept:critical_thinking_philosophy`, `concept:critical_thinking_education`) and link them to a parent node (e.g., `concept:critical_thinking`) using the relationship `IS_SUBCONCEPT_OF`.
-- **Example**:
-  - Document Text: "Adaptive learning path is a sequence of learning objects tailored to a learner's preferences and performance. It relies on recommender systems."
-  - Output: `Sanitized_Concept: "adaptive_learning_path"`, `Definition: "A sequence of learning objects tailored to a learner's preferences and performance"`, `Example: "PathDyn model recommending LOs based on real-time analytics"`, `Node_Label: "Concept"`.
 
----
+## Relationship Reference- **Example**:
 
-###### Layer 2: Contextual and Relational Data Extraction
+- Allowed types: REQUIRES, IS_PREREQUISITE_OF, NEXT, REMEDIATES, HAS_ALTERNATIVE_PATH, SIMILAR_TO, IS_SUBCONCEPT_OF.  - Document Text: "Adaptive learning path is a sequence of learning objects tailored to a learner's preferences and performance. It relies on recommender systems."
 
-- **Objective**: Extract contextual data (e.g., numerical data, prerequisites) and relationships to enrich nodes and define connections in the Knowledge Graph using Causal Analysis.
-- **Tasks**:
-  - Use NLP techniques to detect verbs or phrases indicating causal relationships (e.g., "requires," "depends on," "leads to").
-  - Map these phrases to predefined Relationship_Type values such as REQUIRES, IS_PREREQUISITE_OF, NEXT, etc.
+- Weight scale: 5 critical, 4 very important, 3 moderate, 2 minor, 1 minimal.  - Output: `Sanitized_Concept: "adaptive_learning_path"`, `Definition: "A sequence of learning objects tailored to a learner's preferences and performance"`, `Example: "PathDyn model recommending LOs based on real-time analytics"`, `Node_Label: "Concept"`.
+
+- Dependency scale: 5 fully dependent, 4 strong, 3 moderate, 2 weak, 1 independent.
+
+- Each relationship row must reference existing nodes and use the shared `Document_ID`.---
+
+
+
+---###### Layer 2: Contextual and Relational Data Extraction
+
+
+
+## CSV Output Schema- **Objective**: Extract contextual data (e.g., numerical data, prerequisites) and relationships to enrich nodes and define connections in the Knowledge Graph using Causal Analysis.
+
+- `nodes.csv` header: `"Document_ID","Node_ID","Node_Label","Sanitized_Concept","Context","Definition","Example","Learning_Objective","Skill_Level","Time_Estimate","Difficulty","Priority","Prerequisites","Semantic_Tags","Focused_Semantic_Tags",...` (append `"Key_Property_X","Value_X"` pairs as needed).- **Tasks**:
+
+- `relationships.csv` header: `"Document_ID","Source_Node_ID","Relationship_Type","Target_Node_ID","Weight","Dependency"`.  - Use NLP techniques to detect verbs or phrases indicating causal relationships (e.g., "requires," "depends on," "leads to").
+
+- Quote every field, separate by commas, maintain strict ordering.  - Map these phrases to predefined Relationship_Type values such as REQUIRES, IS_PREREQUISITE_OF, NEXT, etc.
+
   - Example: If the document states "Understanding variables is a prerequisite for learning functions," create a relationship concept:variables -> concept:functions with Relationship_Type = "IS_PREREQUISITE_OF", Weight = 5, Dependency = 5.
-  - Extract numerical data (e.g., percentages, counts, durations, scores) and experimental details (e.g., methodology, results). Store in `Numerical_Data` property (e.g., "Mean salary: 58, N=12").
+
+---  - Extract numerical data (e.g., percentages, counts, durations, scores) and experimental details (e.g., methodology, results). Store in `Numerical_Data` property (e.g., "Mean salary: 58, N=12").
+
   - Identify prerequisites and remediation paths explicitly mentioned in the document.
-  - Define relationships: `REQUIRES`, `NEXT`, `IS_PREREQUISITE_OF`, `REMEDIATES`, `HAS_ALTERNATIVE_PATH`, `SIMILAR_TO`, `IS_SUBCONCEPT_OF`.
-	- Relationships
+
+## Mini Example  - Define relationships: `REQUIRES`, `NEXT`, `IS_PREREQUISITE_OF`, `REMEDIATES`, `HAS_ALTERNATIVE_PATH`, `SIMILAR_TO`, `IS_SUBCONCEPT_OF`.
+
+For a short excerpt explaining the arithmetic mean:	- Relationships
+
 		- Define relationships in `relationships.csv`: `REQUIRES`, `IS_PREREQUISITE_OF`, `NEXT`, `REMEDIATES`, `HAS_ALTERNATIVE_PATH`, `SIMILAR_TO`, `IS_SUBCONCEPT_OF`.
-		- Rule: Only use 7 relationship types: REQUIRES, IS_PREREQUISITE_OF, NEXT, REMEDIATES, HAS_ALTERNATIVE_PATH, SIMILAR_TO, IS_SUBCONCEPT_OF.
-		- Don't create new relationship type in any case.
+
+`nodes.csv`		- Rule: Only use 7 relationship types: REQUIRES, IS_PREREQUISITE_OF, NEXT, REMEDIATES, HAS_ALTERNATIVE_PATH, SIMILAR_TO, IS_SUBCONCEPT_OF.
+
+"Doc_001","concept:mean","Concept","mean","descriptive_statistics","The arithmetic average of a numeric set.","Mean salary of 40k, 50k, 60k is 50k.","Compute averages for sample datasets.","Apply","15","STANDARD","4","concept:data_collection","arithmetic_mean;average;central_tendency;data_analysis;data_literacy;data_science;descriptive_statistics;expected_value;finance;forecasting;mathematics;mean;probability;quantitative_methods;quantitative_reasoning;statistics;statistical_analysis;summary_statistics;trend_analysis;value_aggregation","arithmetic_mean;central_tendency;descriptive_statistics","Numerical_Data","Mean example uses salaries of 40k,50k,60k"		- Don't create new relationship type in any case.
+
 		- **Definitions and Guidance**:
-		
-		  - `REQUIRES`: Indicates that the source node cannot be understood without first mastering the target node. Use when the document explicitly states a dependency (e.g., "Adaptive learning paths require understanding of recommender systems").
+
+`relationships.csv`
+
+"Doc_001","concept:mean","IS_PREREQUISITE_OF","concept:standard_deviation","4","4"		  - `REQUIRES`: Indicates that the source node cannot be understood without first mastering the target node. Use when the document explicitly states a dependency (e.g., "Adaptive learning paths require understanding of recommender systems").
+
 			- **Example**: concept:functions -> concept:variables (Weight = 5, Dependency = 5 for a foundational requirement).
-		  
+
+Use the same structure for the full document, expanding nodes, relationships, and dynamic properties while adhering to the three-layer workflow and validation rules.
+
 		  - `IS_PREREQUISITE_OF`: The inverse of REQUIRES. Assign Weight = 3-5 and Dependency = 3-5, with higher values for foundational prerequisites (e.g., 'variables are needed for functions')
 			- **Example**: concept:variables -> concept:functions (Weight = 5, Dependency = 5).
-		  
+
 		  - `NEXT`: Indicates a sequential progression in the learning path, where the source node should be followed by the target node. Use when the document suggests a logical order. Assign Weight = 2-4 and Dependency = 1-3, with higher values for explicit sequences (e.g., 'learn median after mean in the curriculum').
 			- **Example**: concept:mean -> concept:median (Weight = 3, Dependency = 2 for a logical but non-essential sequence).
-		  
+
 		  - `REMEDIATES`: Indicates that the target node provides remedial content to address difficulties with the source node. Use when the document suggests a fallback or remedial path. Assign Weight = 3-5 and Dependency = 2-4, with higher values for strongly suggested fallback paths (e.g., 'review statistics if struggling with hypothesis testing')
 			- **Example**: concept:hypothesis_testing -> concept:statistics (Weight = 4, Dependency = 3).
-		  
+
 		  - `HAS_ALTERNATIVE_PATH`: Indicates that the target node offers an alternative learning path if the source node is too challenging. Use when the document suggests alternative concepts (e.g., "If hypothesis testing is too difficult, learners can study descriptive statistics instead"). Assign Weight = 2-4 and Dependency = 1-3, with higher values for clearly stated alternatives (e.g., 'study descriptive statistics instead of hypothesis testing').
 			- **Example**: concept:hypothesis_testing -> concept:descriptive_statistics (Weight = 3, Dependency = 2).
-		  
+
 		  - `SIMILAR_TO`: Indicates that the source and target nodes are semantically similar, allowing learners to explore related concepts. Use when the document implies similarity or when LLM infers semantic similarity based on node content. Assign Weight = 1-3 and Dependency = 1-2, with higher values for closely related concepts (e.g., 'mean and median are measures of central tendency')
 			- **Example**: concept:mean -> concept:median (Weight = 2, Dependency = 1).
-		  
+
 		  - `IS_SUBCONCEPT_OF`: Indicates that the source node is a specific instance or sub-category of the target node. Use for hierarchical relationships. Assign Weight = 3-5 and Dependency = 2-4, with higher values for clear subcategories (e.g., 'critical_thinking_philosophy is a subconcept of critical_thinking')
 			- **Example**: concept:critical_thinking_philosophy -> concept:critical_thinking (Weight = 4, Dependency = 3).
-		
+
 		- **Extraction**:
 		  - Extract explicit relationships (e.g., `Prerequisites`) from the document.
 		  - Infer implicit relationships using LLM:
@@ -161,7 +250,7 @@ Ensure the selected concept represents the document's main content by verifying 
 		- For Weight, assess the relationship’s importance in the learning path (e.g., critical for REQUIRES, supplementary for SIMILAR_TO).
 		- For Dependency, evaluate how essential the target node is to understanding the source node (e.g., fully dependent for REQUIRES, loosely related for SIMILAR_TO).
 		- Assign values within the suggested range, documenting the reasoning (e.g., 'Assigned Weight = 4 for REMEDIATES due to explicit mention of a remedial path').
-	
+
 	- Validation:
 		- Cross-check extracted relationships with document content, focusing on frequency and placement (e.g., in titles or introductions).
 		- If a relationship is inferred but not explicitly stated, reduce Weight and Dependency to 3 or lower and note the inference.
@@ -174,7 +263,7 @@ Ensure the selected concept represents the document's main content by verifying 
 - **Prioritization**:
   - For numerical data, prioritize values explicitly stated in the document (e.g., in tables, results sections).
   - For prerequisites and remediation paths, prioritize those mentioned in key sections (e.g., introduction, methodology).
-  
+
 - **Example**:
   - Document Text: "Adaptive learning paths require understanding of recommender systems and real-time analytics."
   - Output: Prerequisites: "concept:recommender_systems,concept:real_time_analytics", Relationship: "concept:adaptive_learning_path" -> "concept:recommender_systems" (REQUIRES, Weight = 5, Dependency = 5) and "concept:adaptive_learning_path" -> "concept:real_time_analytics" (REQUIRES, Weight = 5, Dependency = 5).
@@ -225,7 +314,7 @@ Ensure the selected concept represents the document's main content by verifying 
         - For Focused_Semantic_Tags, ensure at least one tag matches the Sanitized_Concept.
       - **Example**: For "mean": "arithmetic_mean;central_tendency;data_analysis".
       - Separate tags with semicolons (;).
-	
+
 	- For abstract concepts (e.g., "critical thinking"), use Socratic Questioning to uncover implicit knowledge:
 	  - Ask questions like "Why is this concept important?" or "How can this concept be applied?" to extract deeper insights.
 	  - Store the results as dynamic properties in nodes.csv, e.g., Key_Property_1 = "Socratic_Inference", Value_1 = "Critical thinking is important because it enables problem-solving (inferred from learning objectives).".
@@ -236,7 +325,7 @@ Ensure the selected concept represents the document's main content by verifying 
 - **Prioritization**:
   - For real-world applications, prioritize those mentioned in sections like "Applications" or "Use Cases".
   - For learning tips, prioritize suggestions explicitly stated in the document (e.g., in sections like "Recommendations" or "Best Practices").
-  
+
 - **Validation**:
   - For `Common_Errors`: Only extract errors if the document mentions related issues, difficulties, or mistakes. If not, mark as "Not Available".
   - For `Learning_Tips`: Extract only if the document mentions learning methods, tips, or suggestions. If not, mark as "Not Available".
@@ -245,7 +334,7 @@ Ensure the selected concept represents the document's main content by verifying 
 
 - **Handling Missing Data**:
   - If a property is not found, mark it as "Not Available". If possible, infer from context or educational ontologies to suggest a reasonable value.
-  
+
 - **Example**:
   - Document Text: "Adaptive learning paths can be challenging if learners assume static paths work for all."
   - Output: `Common_Errors: "Assuming static paths work for all learners"`.
@@ -330,7 +419,7 @@ Ensure the selected concept represents the document's main content by verifying 
 	- Cross-validate with the document: Skill_Level should match the learning objective
     - Use Bloom’s Taxonomy Ontology to verify the level.
     - If insufficient context, mark as "Not Available".
-	
+
 
 - **`Time_Estimate`**:
   - **Description**: Estimated time (in minutes) for an average learner to understand the concept.
