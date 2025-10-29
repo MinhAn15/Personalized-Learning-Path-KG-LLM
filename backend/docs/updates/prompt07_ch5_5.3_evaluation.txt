@@ -1,0 +1,81 @@
+### 5.3. ? nh gi  c c thu?t to n nƒng cao
+
+#### 5.3.1. ? nh gi  Deep Knowledge Tracing (DKT)
+- So s nh accuracy gi?a SAKT, DKVMN, IRT; v¡ d?: SAKT 89.3%, DKVMN 85.7%, IRT 76.6% (tham kh?o nghiˆn c?u v… m“ ph?ng n?i b?).
+- So s nh AUC/Precision/Recall/F1; phƒn t¡ch mastery prediction theo s? l?n attempt (t?ng ?n ??nh ??n ~5 attempts, sau ?¢ bÆo h•a).
+
+B?ng 5.1: Hi?u n?ng DKT (minh h?a)
+| Model          | Accuracy | AUC  | Precision | Recall | F1   |
+|----------------|----------|------|-----------|--------|------|
+| IRT            | 76.6%    | 0.72 | 0.74      | 0.71   | 0.72 |
+| DKT (vanilla)  | 82.1%    | 0.78 | 0.80      | 0.79   | 0.79 |
+| DKVMN          | 85.7%    | 0.83 | 0.84      | 0.82   | 0.83 |
+| SAKT           | 89.3%    | 0.87 | 0.88      | 0.87   | 0.87 |
+
+Nh?n x‚t: SAKT outperform v? Accuracy/AUC; DKVMN cƒn b?ng gi?a ?? ch¡nh x c v… chi ph¡ t¡nh to n; IRT l…m baseline gi?i th¡ch t?t nh?ng k‚m ch¡nh x c trˆn d? li?u ??ng.
+
+---
+
+#### 5.3.2. ? nh gi  Reinforcement Learning Path Planning
+- Th? nghi?m m“ ph?ng v?i A*, DQN, PPO, Hybrid (A*+PPO).
+- ? nh gi  Length (s? b??c), Time to Goal (giƒy), Success Rate (%), Satisfaction (1?5).
+
+B?ng 5.2: K?t qu? RL Path Planning (minh h?a)
+| Algorithm  | Avg Path | Avg Time | Success Rate | Satisfaction |
+|------------|----------|----------|--------------|--------------|
+| A*         | 8.4      | 142 s    | 78%          | 3.6          |
+| DQN        | 7.9      | 131 s    | 82%          | 3.9          |
+| PPO        | 7.4      | 125 s    | 86%          | 4.2          |
+| Hybrid     | 6.8      | 118 s    | 90%          | 4.5          |
+
+Nh?n x‚t: Hybrid gi?m chi?u d…i l? trnh v… th?i gian; PPO ?n ??nh v… h?i t? nhanh; A* l… baseline x c ??nh nh?ng thi?u th¡ch nghi.
+
+---
+
+#### 5.3.3. ? nh gi  GraphRAG Retrieval
+- ? nh gi  theo query: structural, semantic, overview.
+- Metrics: comprehensiveness, diversity, relevance, multi-hop accuracy, response time.
+
+B?ng 5.3: Baseline RAG vs GraphRAG (minh h?a)
+| Metric              | Baseline RAG | GraphRAG | Improvement |
+|---------------------|--------------|----------|-------------|
+| Comprehensiveness   | 58%          | 82%      | +41%        |
+| Diversity           | 51%          | 67%      | +32%        |
+| Multi-hop accuracy  | 42%          | 66%      | +56%        |
+| Relevance           | 78%          | 85%      | +7%         |
+| Response time       | 1.00ž        | 1.12ž    | ?12% (slower)|
+
+Nh?n x‚t: GraphRAG v??t tr?i v? multi-hop v… ?? bao qu t, ??i l?i chi ph¡ th?i gian t?ng nh? do t?ng h?p c?ng ??ng.
+
+---
+
+#### 5.3.4. ? nh gi  GNN-based Recommendation
+- Th?c nghi?m: Precision@5, Recall@5, F1@5, NDCG@5 trˆn ma tr?n student?concept.
+
+B?ng 5.4: So s nh ph??ng ph p g?i ì (minh h?a)
+| Method                | Precision@5 | Recall@5 | F1@5 | NDCG@5 |
+|----------------------|-------------|----------|------|--------|
+| Popularity           | 0.52        | 0.39     | 0.45 | 0.47   |
+| Collaborative Filter | 0.59        | 0.46     | 0.51 | 0.54   |
+| GCN                  | 0.71        | 0.65     | 0.68 | 0.70   |
+| GAT                  | 0.73        | 0.70     | 0.71 | 0.73   |
+| Hybrid GCN+GAT       | 0.80        | 0.78     | 0.79 | 0.81   |
+
+Nh?n x‚t: Hybrid GCN+GAT c?i thi?n nh?t qu n trˆn m?i th??c ?o; GAT > GCN nh? attention theo l ng gi?ng.
+
+---
+
+#### 5.3.5. ? nh gi  Process Mining Analytics
+- Metrics: Fitness, Precision, Average Deviation, Completion Rate.
+- T?ng h?p deviation: skip, remedial, alternative, dropout; x c ??nh bottlenecks.
+
+V¡ d? t?ng h?p (minh h?a)
+| Metric            | Value |
+|-------------------|-------|
+| Fitness           | 0.86  |
+| Precision         | 0.81  |
+| Avg Deviation     | 0.24  |
+| Completion Rate   | 78%   |
+| Top Bottlenecks   | Joins, Aggregations |
+
+Nh?n x‚t: Deviations t?p trung ? concepts c¢ ?? kh¢ cao; c?n chi?n l??c can thi?p s?m.
