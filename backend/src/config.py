@@ -107,6 +107,24 @@ class Config:
     }
 
     # ==============================================================================
+    # ACADEMIC ENUMS & CONSTANTS (for advanced modules)
+    # ==============================================================================
+    # Bloom's Taxonomy (uppercase for KG concept alignment)
+    COGNITIVE_LEVELS = [
+        "REMEMBER", "UNDERSTAND", "APPLY", "ANALYZE", "EVALUATE", "CREATE"
+    ]
+    # Difficulty score bounds (quantified scale)
+    DIFFICULTY_SCORE_MIN = 0.0
+    DIFFICULTY_SCORE_MAX = 10.0
+    # ZPD defaults (Zone of Proximal Development) — coarse placeholders
+    ZPD_DEFAULT_LOWER = 0.3  # lower mastery bound
+    ZPD_DEFAULT_UPPER = 0.7  # upper mastery bound
+    # Spaced repetition defaults (Ebbinghaus-like)
+    FORGETTING_BASE = 0.5
+    REVIEW_MIN_DAYS = 1
+    REVIEW_MAX_DAYS = 30
+
+    # ==============================================================================
     # CẤU HÌNH CHUNG
     # ==============================================================================
     LEARNING_STYLE_VARK = ["visual", "auditory", "reading_writing", "kinesthetic"]

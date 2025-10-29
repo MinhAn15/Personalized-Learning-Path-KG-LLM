@@ -171,6 +171,45 @@ Sau khi server chạy, truy cập:
 }
 ```
 
+### Neo4j schema setup (constraints & indexes)
+
+Chạy script thiết lập schema để tạo các ràng buộc và chỉ mục quan trọng trong Neo4j:
+
+```powershell
+& '.venv\Scripts\python.exe' backend/scripts/neo4j_schema_setup.py
+```
+
+Script cố gắng tạo:
+- UNIQUE constraint cho `KnowledgeNode.Node_ID` và `Student.StudentID`
+- Indexes cho các thuộc tính truy vấn phổ biến: `Context`, `Skill_Level`, `Priority`, `Difficulty`, `Time_Estimate`, `Semantic_Tags`
+- Indexes cho `LearningData (student_id, timestamp)` và `node_id`
+- Index thuộc tính quan hệ `Weight`, `Dependency` (bỏ qua nếu Neo4j không hỗ trợ)
+
+### New building blocks (optional to use now)
+
+- `backend/src/learner_state.py`: mô hình hóa trạng thái người học (mastery, ZPD, lịch ôn)
+    - `LearnerState.from_neo4j(driver, student_id)` để dựng trạng thái từ `LearningData`
+    - `update_mastery`, `estimate_next_review`, `predict_mastery`
+- `backend/src/adaptive_path_planner.py`: bộ lập kế hoạch đường đi, có thể tận dụng `a_star_custom` nếu đã có
+    - `AdaptivePathPlanner.compute_dynamic_weights(learner)` và `plan_path(...)`
+- `backend/src/hybrid_retriever.py`: Hybrid retriever (Graph RAG + tag-sim surrogate)
+    - `retrieve(query, learner_id, context_type)` với router đơn giản giữa cấu trúc/semantic
+- `backend/src/explainability.py`: giải thích đường đi và đề xuất thay thế
+    - `explain_path(nodes, metrics, learner)` và `generate_counterfactuals(...)`
+
+### Production-oriented helpers (optional)
+
+- `backend/src/neo4j_manager.py`: Neo4j connection manager with pooling
+    - `Neo4jManager().create_schema()` applies constraints/indexes (same as script)
+    - `execute_read(query, params)`, `execute_write(query, params)` helpers
+- `backend/src/learner_profile_manager.py`: Student profile management
+    - `create_student(student_id, initial_profile)`
+    - `update_profile_dimension(student_id, dimension, updates)`
+    - `get_student_profile(student_id)` returns summary with derived metrics
+- `backend/src/knowledge_tracing.py`: advanced knowledge tracing (decay + Bayesian-like update)
+    - `compute_mastery_with_decay(student_id, node_id)`
+    - `update_mastery_after_assessment(student_id, node_id, performance_score, assessment_method)`
+
 ## 🧰 Dev helper (start/stop logs)
 
 There's a convenient PowerShell helper at `scripts/start_dev.ps1` to start/stop backend and frontend and capture logs. Example usage:
