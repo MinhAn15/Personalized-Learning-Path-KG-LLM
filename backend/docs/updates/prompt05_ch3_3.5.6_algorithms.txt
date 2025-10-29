@@ -1,0 +1,68 @@
+### 3.5.6. Thu?t to†n ?? xu?t l? trçnh nÉng cao
+
+#### 3.5.6.1. Hybrid Path Planning: A* + Reinforcement Learning
+
+- K?t h?p A* (t?i ?u toÖn c?c) v?i RL agent (PPO) cho t?i ?u c?c b?.
+- A* tçm ???ng ?i t?i ?u tràn ?? th? tri th?c v?i hÖm heuristic custom:
+[ h(n) = w_1 \cdot (1 - \text{similarity}(n, goal)) + w_2 \cdot \frac{\text{difficulty}(n)}{\text{skill}(student)} + w_3 \cdot \frac{\text{time}(n)}{\text{available}_\text{time}} ]
+  Trong ?¢: similarity lÖ Jaccard gi?a tags concept, difficulty lÖ ?? kh¢ concept, skill lÖ trçnh ?? h?c viàn, time lÖ th?i gian ??c t°nh.
+- RL agent ?i?u ch?nh l? trçnh c?c b? theo tr?ng th†i mastery, hi?u su?t, th?i gian.
+- PPO reward function:
+[ r_t = \alpha \cdot \Delta \text{mastery} + \beta \cdot \text{efficiency} - \gamma \cdot \text{deviation} ]
+- Python code m?u:
+```
+class AdaptivePathPlanner:
+    def plan_path(self, learner_id, start_node, goal_node):
+        global_path = self.a_star_custom(start_node, goal_node, learner_id)
+        refined_path = self.rl_agent.refine(global_path, learner_state)
+        weights = self.compute_dynamic_weights(learner_state)
+        return refined_path
+```
+
+---
+
+#### 3.5.6.2. GraphRAG Retrieval Algorithm
+
+- Thu?t to†n GraphRAG cho hybrid retrieval: semantic vector search, graph traversal, community summary.
+- Quy trçnh workflow:
+  1. Classify query (structural/semantic/overview)
+  2. Retrieve b?ng cypher, embedding, ho?c LLM summary
+  3. Fuse context vÖ profile h?c viàn, tr? v? k?t qu?.
+- Code m?u:
+```
+class HybridRetriever:
+    def retrieve(self, query, learner_id, context_type):
+        strategy = self.classify_query(query)
+        if strategy == "structural":
+            return self.graph_traversal(query)
+        elif strategy == "semantic":
+            return self.vector_search(query)
+        else:
+            return self.community_summary(query)
+```
+
+---
+
+#### 3.5.6.3. GNN-based Recommendation Algorithm
+
+- S? d?ng GCN (graph convolution) + GAT (graph attention) ?? d? ?o†n concept ti?p theo trong ?? th? h?c viàn?kh†i ni?m.
+- Mì hçnh multi-layer:
+  - Input: student profile, concept properties
+  - 2 GCN layers + 1 GAT layer
+  - Output: link prediction cho ?student ? concept?
+  - Loss: binary cross-entropy tràn h?c viàn v?i concept ?£ng/sai
+- Code m?u:
+```
+class GNNRecommender:
+    def recommend(self, student_id, top_k=5):
+        student_emb = self.model.encode_student(student_id)
+        candidates = self.get_candidates(student_id)
+        scores = [self.model.predict(student_emb, c) for c in candidates]
+        return sorted(zip(candidates, scores), reverse=True)[:top_k]
+```
+
+TÖi li?u tham kh?o (m?c nÖy):
+- Schulman et al. (2017): ?Proximal Policy Optimization?
+- Microsoft (2024): ?GraphRAG: Unlocking LLM discovery...?
+- Kipf & Welling (2017): ?Graph Convolutional Networks?
+- ACM (2025): ?Personalized Learning Path with Time-Aware Attention?

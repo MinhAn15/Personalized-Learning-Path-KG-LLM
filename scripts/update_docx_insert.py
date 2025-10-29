@@ -54,6 +54,19 @@ def _parse_blocks(text: str):
         if not line.strip():
             i += 1
             continue
+        # Code fence block ``` (optionally with language tag)
+        if line.strip().startswith("```"):
+            # consume fence line and collect until closing fence
+            i += 1
+            code_lines = []
+            while i < n and not lines[i].strip().startswith("```"):
+                code_lines.append(lines[i].rstrip("\n"))
+                i += 1
+            # skip closing fence if present
+            if i < n and lines[i].strip().startswith("```"):
+                i += 1
+            yield ("code", code_lines)
+            continue
         # Heading starting with ###
         if line.lstrip().startswith("### "):
             yield ("heading", line.lstrip()[4:].strip())
@@ -92,7 +105,7 @@ def _parse_blocks(text: str):
         # Paragraph: accumulate until blank line or another block
         para_lines = [line]
         i += 1
-        while i < n and lines[i].strip() and not lines[i].lstrip().startswith("### ") and not is_table_line(lines[i]) and not ((lines[i].strip().startswith("\\[") and lines[i].strip().endswith("\\]")) or (lines[i].strip().startswith("[") and lines[i].strip().endswith("]"))):
+        while i < n and lines[i].strip() and not lines[i].lstrip().startswith("### ") and not is_table_line(lines[i]) and not ((lines[i].strip().startsWith("```") if hasattr(lines[i].strip(), 'startsWith') else lines[i].strip().startswith("```")) or (lines[i].strip().startswith("\\[") and lines[i].strip().endswith("\\]")) or (lines[i].strip().startswith("[") and lines[i].strip().endswith("]"))):
             para_lines.append(lines[i])
             i += 1
         yield ("paragraph", " ".join(l.strip() for l in para_lines).strip())
@@ -123,6 +136,13 @@ def _insert_structured_after_anchor(doc: Document, text: str, anchor: str, occur
                 r = p.add_run(payload)
                 r.font.name = "Cambria Math"
                 r.font.size = Pt(12)
+            elif kind == "code":
+                # Insert code block as monospace lines
+                for j, line in enumerate(payload or []):
+                    p = doc.add_paragraph()
+                    r = p.add_run(line)
+                    r.font.name = "Consolas"
+                    r.font.size = Pt(10)
             elif kind == "table":
                 rows = payload
                 if not rows:
@@ -163,6 +183,14 @@ def _insert_structured_after_anchor(doc: Document, text: str, anchor: str, occur
             r.font.size = Pt(12)
             after_elem.addnext(p._element)
             after_elem = p._element
+        elif kind == "code":
+            for j, line in enumerate(payload or []):
+                p = doc.add_paragraph()
+                r = p.add_run(line)
+                r.font.name = "Consolas"
+                r.font.size = Pt(10)
+                after_elem.addnext(p._element)
+                after_elem = p._element
         elif kind == "table":
             rows = payload
             if not rows:
