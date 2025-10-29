@@ -1,0 +1,18 @@
+### 2.3.4. GraphRAG ? Graph Retrieval-Augmented Generation
+
+GraphRAG l… ki?n tr£c truy v?n tri th?c tiˆn ti?n k?t h?p retrieval t? ?? th? v… LLM generation, ???c Microsoft Research ?? xu?t n?m 2024 nh?m t?ng kh? n?ng reasoning multi-hop [GraphRAG: Unlocking LLM discovery..., Microsoft, 2024].
+
+- Community Detection: S? d?ng Leiden/Louvain ?? chia KG th…nh communities, t?i ?u modularity.
+[Q = (1/(2m)) * ?_{i,j} [ A_{ij} - (k_i k_j)/(2m) ] ?(c_i, c_j)]
+- Community Summarization: D—ng LLM t?o summary (150-200 t?) cho t?ng nh¢m.
+  V¡ d? Prompt: ?Given list {concepts_list} and {relationships_list}, write summary describing main theme, key concepts, learning objectives.?
+- Hybrid Retrieval: K?t h?p semantic vector search, graph traversal (shortest path, subgraph), v… community summary.
+- ?u ?i?m: Theo Microsoft, GraphRAG t?ng +41% comprehensiveness, +56% multi-hop accuracy, +32% diversity so v?i RAG truy?n th?ng.
+- ?ng d?ng: `backend/src/hybrid_retriever.py` g?m functions community detection, LLM-based summarization, hybrid retriever cho c c ki?u truy v?n.
+
+B?ng 2.3: So s nh GraphRAG vs Traditional RAG
+| Metric              | Traditional RAG | GraphRAG | Improvement |
+|---------------------|-----------------|----------|-------------|
+| Comprehensiveness   | 58%             | 82%      | +41%        |
+| Diversity           | 51%             | 67%      | +32%        |
+| Multi-hop reasoning | 42%             | 66%      | +56%        |

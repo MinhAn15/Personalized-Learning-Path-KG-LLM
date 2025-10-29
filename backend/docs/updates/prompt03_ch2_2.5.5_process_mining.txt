@@ -1,0 +1,22 @@
+### 2.5.5. Process Mining trong Educational Analytics
+
+Process Mining lÖ cìng c? phÉn t°ch event logs, ph†t hi?n bottlenecks, ?o l??ng conformance gi?a l? trçnh th?c t? vÖ ?? xu?t.
+
+- Process Discovery: S? d?ng Alpha algorithm, Heuristic Miner... cho learning logs.
+- Conformance Checking: So s†nh actual paths v?i recommended path qua Log Skeleton:
+  - Always Before / After
+  - Equivalence / Never Together
+- Conformance Metric:
+[Fitness = 1 - ( |Violations| / |Total Constraints| )]
+- ?ng d?ng: `backend/src/process_mining.py` dóng pm4py ?? phÉn t°ch logs, tr? v? t°nh l?ch, t?n su?t, completion rate, vÖ v? flow chart.
+
+B?ng ?? xu?t: Bottleneck concepts (top dropout rate), Completion Rate, Average Deviation t? l? trçnh chu?n.
+
+TÖi li?u tham kh?o (c†c m?c 2.3.4?2.5.5):
+- Microsoft Research (2024): ?GraphRAG: Unlocking LLM discovery...?.
+- IJECE (2025): ?Personalized learning recommendations based on graph neural networks?.
+- Neurocomputing (2024): ?Graph neural network based intelligent tutoring system?.
+- Knowledge-Based Systems (2024): ?Personalized process?type learning path recommendation based on process mining and deep knowledge tracing?.
+- Frontiers in Education (2025): ?Educational process mining: literature classification, gaps, and trends?.
+- Kipf & Welling (2017): ?Semi-Supervised Classification with Graph Convolutional Networks?.
+- Veli?kovi? et al. (2018): ?Graph Attention Networks?.
