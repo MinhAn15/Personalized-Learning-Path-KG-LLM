@@ -15,6 +15,7 @@ scikit-learn
 mlxtend
 nltk
 nest_asyncio
+torch
 fastapi
 uvicorn[standard]
 python-multipart==0.0.20

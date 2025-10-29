@@ -2,9 +2,21 @@ from __future__ import annotations
 
 import logging
 import math
+import random
 from datetime import datetime, timedelta
 from statistics import mean, pstdev
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+
+import pandas as pd
+
+try:
+    import torch  # type: ignore
+    from torch import nn  # type: ignore
+    import torch.nn.functional as F  # type: ignore
+except ImportError:  # pragma: no cover - handled gracefully at runtime
+    torch = None
+    nn = None
+    F = None
 
 from .neo4j_manager import Neo4jManager
 
@@ -160,3 +172,279 @@ class AdvancedKnowledgeTracer:
         else:
             days = 30
         return (last_assessed or datetime.now()) + timedelta(days=days)
+
+
+if nn is not None:
+
+    class _DKTModel(nn.Module):
+        """Minimal LSTM-based DKT network."""
+
+        def __init__(self, input_dim: int, hidden_size: int, num_skills: int):
+            super().__init__()
+            self.hidden_size = hidden_size
+            self.input_layer = nn.Linear(input_dim, hidden_size)
+            self.lstm = nn.LSTM(hidden_size, hidden_size, batch_first=True)
+            self.output_layer = nn.Linear(hidden_size, num_skills)
+
+    def forward(self, x: Any) -> Any:
+            h = torch.relu(self.input_layer(x))
+            out, _ = self.lstm(h)
+            logits = self.output_layer(out)
+            return torch.sigmoid(logits)
+
+else:  # pragma: no cover - fallback for typing when torch absent
+
+    class _DKTModel:  # type: ignore[empty-body]
+        pass
+
+
+class DeepKnowledgeTracer:
+    """Deep Knowledge Tracing using a lightweight PyTorch LSTM implementation."""
+
+    def __init__(
+        self,
+        neo4j: Neo4jManager,
+        hidden_size: int = 64,
+        learning_rate: float = 1e-3,
+        score_threshold: float = 0.7,
+        max_epochs: int = 8,
+        device: Optional[str] = None,
+    ) -> None:
+        if torch is None:
+            raise ImportError(
+                "DeepKnowledgeTracer requires PyTorch. Please install torch in the backend environment."
+            )
+
+        self.neo4j = neo4j
+        self.hidden_size = hidden_size
+        self.learning_rate = learning_rate
+        self.score_threshold = score_threshold
+        self.max_epochs = max_epochs
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+
+        self.model: Optional[_DKTModel] = None
+        self.num_skills: int = 0
+        self.input_dim: int = 0
+        self.skill_to_index: Dict[str, int] = {}
+        self.index_to_skill: Dict[int, str] = {}
+        self.student_sequences: Dict[str, List[Tuple[int, int]]] = {}
+        self.dataset_df: pd.DataFrame = pd.DataFrame()
+        self.trained: bool = False
+
+    # --- Public API -------------------------------------------------------
+    def ensure_trained(self) -> None:
+        if not self.trained:
+            trained = self.train(self.max_epochs)
+            if not trained:
+                raise RuntimeError("DeepKnowledgeTracer training aborted: insufficient data.")
+
+    def train(self, epochs: int = 8) -> bool:
+        df = self._load_learning_dataframe()
+        sequences = self._prepare_sequences(df)
+        if not sequences or self.num_skills == 0:
+            logger.warning("DKT: No sequences available for training.")
+            return False
+
+        self.model = _DKTModel(self.input_dim, self.hidden_size, self.num_skills).to(self.device)
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.learning_rate)
+
+        self.model.train()
+        for epoch in range(epochs):
+            total_loss = 0.0
+            batches = 0
+            for seq in sequences:
+                tensors = self._sequence_to_training_tensors(seq)
+                if tensors is None:
+                    continue
+                inputs, target_skills, target_correct = tensors
+                optimizer.zero_grad()
+                preds = self.model(inputs)
+                preds = preds.squeeze(0)  # (seq_len, num_skills)
+                selected = preds.gather(1, target_skills.unsqueeze(1)).squeeze(1)
+                loss = F.binary_cross_entropy(selected, target_correct)
+                loss.backward()
+                optimizer.step()
+                total_loss += float(loss.item())
+                batches += 1
+
+            if batches:
+                avg_loss = total_loss / batches
+                logger.debug("DKT epoch %d | loss=%.4f", epoch + 1, avg_loss)
+
+        self.model.eval()
+        self.trained = True
+        self.dataset_df = df
+        return True
+
+    def predict_mastery(self, student_id: str, node_id: str) -> float:
+        self.ensure_trained()
+        if node_id not in self.skill_to_index:
+            logger.debug("DKT: Node %s unseen during training.", node_id)
+            return 0.0
+        seq = self.student_sequences.get(student_id)
+        if not seq:
+            logger.debug("DKT: No history for student %s.", student_id)
+            return 0.0
+
+        inputs = self._sequence_to_prediction_tensor(seq)
+        if inputs is None or self.model is None:
+            return 0.0
+
+        with torch.no_grad():
+            preds = self.model(inputs)
+        skill_idx = self.skill_to_index[node_id]
+        prob = preds[0, -1, skill_idx].item()
+        return float(max(0.0, min(1.0, prob)))
+
+    def update_mastery_dkt(self, student_id: str, node_id: str) -> Dict[str, Any]:
+        prob = self.predict_mastery(student_id, node_id)
+        status = AdvancedKnowledgeTracer._classify_mastery_status(prob)
+        query = """
+        MATCH (s:Student {StudentID: $sid}), (n:KnowledgeNode {Node_ID: $nid})
+        MERGE (s)-[m:MASTERY]->(n)
+        SET m.score = $score,
+            m.model = 'dkt',
+            m.lastDKTUpdate = datetime()
+        RETURN m.score AS score, m.model AS model, m.lastDKTUpdate AS updated_at
+        """
+        params = {"sid": student_id, "nid": node_id, "score": prob}
+        result = self.neo4j.execute_write(query, params)
+        return {
+            "student_id": student_id,
+            "node_id": node_id,
+            "predicted_mastery": prob,
+            "status": status,
+            "neo4j_response": result,
+        }
+
+    # --- Data preparation --------------------------------------------------
+    def _load_learning_dataframe(self) -> pd.DataFrame:
+        query = """
+        MATCH (s:Student)-[:HAS_LEARNING_DATA]->(ld:LearningData)-[:RELATED_TO_NODE]->(n:KnowledgeNode)
+        RETURN s.StudentID AS student_id,
+               n.Node_ID AS node_id,
+               toFloat(ld.score) AS raw_score,
+               ld.timestamp AS timestamp
+        ORDER BY student_id, timestamp
+        """
+        try:
+            rows = self.neo4j.execute_read(query)
+            df = pd.DataFrame(rows)
+        except Exception as exc:  # pragma: no cover - defensive logging
+            logger.warning("DKT: failed to load learning data from Neo4j: %s", exc)
+            df = pd.DataFrame()
+
+        if df.empty:
+            logger.info("DKT: using mock LearningData dataframe for training.")
+            df = self._mock_learning_dataframe()
+
+        if "timestamp" in df.columns:
+            df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
+        df = df.dropna(subset=["student_id", "node_id", "raw_score"])
+        df = df.sort_values(["student_id", "timestamp"]).reset_index(drop=True)
+        df["score"] = df["raw_score"].apply(self._normalize_score)
+        df["correct"] = df["score"].apply(lambda s: 1 if s >= self.score_threshold else 0)
+        return df[["student_id", "node_id", "score", "correct", "timestamp"]]
+
+    def _prepare_sequences(self, df: pd.DataFrame) -> List[List[Tuple[int, int]]]:
+        nodes = sorted(df["node_id"].unique())
+        self.skill_to_index = {node: idx for idx, node in enumerate(nodes)}
+        self.index_to_skill = {idx: node for node, idx in self.skill_to_index.items()}
+        self.num_skills = len(self.skill_to_index)
+        self.input_dim = self.num_skills * 2
+
+        sequences: Dict[str, List[Tuple[int, int]]] = {}
+        for student_id, group in df.groupby("student_id"):
+            history: List[Tuple[int, int]] = []
+            for _, row in group.iterrows():
+                skill_idx = self.skill_to_index.get(row["node_id"])
+                if skill_idx is None:
+                    continue
+                history.append((skill_idx, int(row["correct"])))
+            if history:
+                sequences[student_id] = history
+
+        self.student_sequences = sequences
+        return list(sequences.values())
+
+    # --- Tensor utilities --------------------------------------------------
+    def _sequence_to_training_tensors(
+        self, seq: List[Tuple[int, int]]
+    ) -> Optional[Tuple[Any, Any, Any]]:
+        if len(seq) < 2 or self.input_dim == 0:
+            return None
+
+        input_vectors: List[List[float]] = []
+        target_skills: List[int] = []
+        target_correct: List[float] = []
+
+        for idx in range(len(seq) - 1):
+            skill, correct = seq[idx]
+            next_skill, next_correct = seq[idx + 1]
+            input_vectors.append(self._interaction_vector(skill, correct))
+            target_skills.append(next_skill)
+            target_correct.append(float(next_correct))
+
+        inputs = torch.tensor(input_vectors, dtype=torch.float32, device=self.device).unsqueeze(0)
+        target_skill_tensor = torch.tensor(target_skills, dtype=torch.long, device=self.device)
+        target_correct_tensor = torch.tensor(target_correct, dtype=torch.float32, device=self.device)
+        return inputs, target_skill_tensor, target_correct_tensor
+
+    def _sequence_to_prediction_tensor(self, seq: List[Tuple[int, int]]) -> Optional[Any]:
+        if not seq or self.input_dim == 0:
+            return None
+        vectors = [self._interaction_vector(skill, correct) for skill, correct in seq]
+        tensor = torch.tensor(vectors, dtype=torch.float32, device=self.device).unsqueeze(0)
+        return tensor
+
+    def _interaction_vector(self, skill_idx: int, correct: int) -> List[float]:
+        vec = [0.0] * self.input_dim
+        offset = self.num_skills if correct >= 1 else 0
+        vec[skill_idx + offset] = 1.0
+        return vec
+
+    @staticmethod
+    def _normalize_score(score: Any) -> float:
+        try:
+            value = float(score)
+        except (TypeError, ValueError):
+            return 0.0
+        if value > 1.0:
+            value /= 100.0
+        return max(0.0, min(1.0, value))
+
+    @staticmethod
+    def _mock_learning_dataframe() -> pd.DataFrame:
+        base_time = datetime.utcnow() - timedelta(days=14)
+        students = ["mock_student_1", "mock_student_2", "mock_student_3"]
+        nodes = ["concept_101", "concept_102", "concept_201", "concept_202", "concept_301"]
+        entries: List[Dict[str, Any]] = []
+        random.seed(42)
+        for student in students:
+            current = base_time
+            for _ in range(12):
+                node = random.choice(nodes)
+                score = max(0.0, min(1.0, random.gauss(0.7, 0.15)))
+                entries.append(
+                    {
+                        "student_id": student,
+                        "node_id": node,
+                        "score": score,
+                        "correct": 1 if score >= 0.7 else 0,
+                        "timestamp": current,
+                    }
+                )
+                current += timedelta(hours=random.randint(6, 18))
+        return pd.DataFrame(entries)
+
+
+def update_mastery_dkt(
+    neo4j: Neo4jManager,
+    student_id: str,
+    node_id: str,
+    tracer: Optional[DeepKnowledgeTracer] = None,
+) -> Dict[str, Any]:
+    """Convenience wrapper to train (if needed) and update mastery with DKT."""
+
+    tracer = tracer or DeepKnowledgeTracer(neo4j)
+    return tracer.update_mastery_dkt(student_id, node_id)
