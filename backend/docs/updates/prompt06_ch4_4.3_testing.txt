@@ -1,0 +1,24 @@
+### 4.3. T°ch h?p module ki?m th?, logging, vÖ automation
+
+?? xu?t tri?n khai:
+- Unit tests backend, target code coverage >70%, ch?y trong CI.
+- CI/CD: GitHub Actions build/test, deploy (tóy mìi tr??ng).
+- Logging: backend/logs, phÉn c?p theo module; m?c INFO/DEBUG cho dev, WARNING/ERROR cho prod.
+- Scripts t? ??ng h¢a: scripts/start_dev.ps1, scripts/neo4j_schema_setup.py, scripts/import_data.py, scripts/run_validation.py, scripts/run_ab_test.py, scripts/run_startup_test.py.
+- Process mining: t°ch h?p pm4py cho th?c nghi?m vÖ dashboards.
+
+B?ng 4.2: Th?ng kà code coverage backend (minh h?a)
+| Module                    | Coverage |
+|---------------------------|----------|
+| src/adaptive_path_planner | TBD      |
+| src/hybrid_retriever      | TBD      |
+| src/graph_recommender     | TBD      |
+| src/knowledge_tracing     | TBD      |
+| src/api                   | TBD      |
+
+Hçnh ?nh/s? ?? ?? xu?t:
+- Hçnh 4.1: Workflow setup mìi tr??ng
+- Hçnh 4.2: Sequence t°ch h?p Gemini API
+- Hçnh 4.3: Prompt engineering pipeline
+
+TÖi li?u tham kh?o: FastAPI documentation (2024), Neo4j Python driver documentation (2024).

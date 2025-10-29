@@ -1,0 +1,22 @@
+### 4.1. Mìi tr??ng tri?n khai vÖ quy trçnh setup
+
+- Mìi tr??ng: Python 3.9+, Node.js 18+, Neo4j AuraDB (cloud), Gemini API (Google).
+- Backend packages: fastapi, uvicorn, neo4j, google-generativeai, llama-index, pandas, pm4py, scikit-learn, tensorflow/torch, python-dotenv, pydantic.
+
+H??ng d?n cÖi ??t Backend:
+1. Clone repo.
+2. T?o virtualenv vÖ k°ch ho?t.
+3. CÖi ??t dependencies t? requirements.txt (th? m?c backend/ n?u c¢ ho?c ? root).
+4. T?o file .env: GEMINI_API_KEY=..., NEO4J_URL=..., NEO4J_USER=..., NEO4J_PASSWORD=...
+5. Kh?i ch?y API (uvicorn FastAPI) vÖ truy c?p Swagger t?i http://localhost:8000/docs.
+
+H??ng d?n Frontend:
+1. cd frontend
+2. npm install
+3. npm run dev (ch?y t?i http://localhost:3000)
+
+Thi?t l?p Neo4j schema:
+- Ch?y script thi?t l?p constraints/indexes: scripts/neo4j_schema_setup.py
+
+Giao ti?p API:
+- REST JSON, tÖi li?u Swagger: http://localhost:8000/docs

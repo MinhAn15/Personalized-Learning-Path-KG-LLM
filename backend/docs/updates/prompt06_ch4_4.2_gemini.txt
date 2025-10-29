@@ -1,0 +1,34 @@
+### 4.2. T°ch h?p LLM (Gemini API) vÖ Prompt Engineering
+
+- Chuy?n t? OpenAI sang Gemini API (Google). C†c model ch°nh: Gemini 1.5 Pro, Gemini 1.5 Flash.
+- H? th?ng s? d?ng c†c prompt templates ch°nh (v° d?):
+  1) SPR Generator
+  2) SPR Validation
+  3) Start Node Determination
+  4) Content Generation
+  5) Quiz Generation
+  6) Community Summary
+  7) Path Explanation
+  8) Feedback Critique
+  9) Error Recovery
+  10) Hint Generation
+
+V° d? Content Generation prompt:
+You are an expert educational content creator with deep knowledge in {domain}.
+Generate comprehensive content for:
+Concept: {concept}
+Adapt to {learning_style}, include real-world use cases, Markdown output.
+
+?†nh gi† chi ph°:
+- Theo tÖi li?u Google AI (2024), Gemini c¢ chi ph° c?nh tranh vÖ c¢ th? ti?t ki?m ~40% cho kh?i l??ng l?n (1M tokens) so v?i c?u hçnh OpenAI t??ng ???ng; c?n t?i ?u prompt vÖ batch ?? ??t hi?u qu?.
+
+B?ng 4.1: Th?ng kà prompt template (minh h?a)
+| Name                 | Template Path                               | Est. Length | Avg. Response Time | Est. Token Usage |
+|----------------------|----------------------------------------------|-------------|--------------------|------------------|
+| SPR Generator        | prompts/spr_generator_prompt.txt              | TBD         | TBD                | TBD              |
+| SPR Validation       | prompts/spr_validation_prompt.txt             | TBD         | TBD                | TBD              |
+| Content Generation   | (inline/configured)                           | TBD         | TBD                | TBD              |
+| Quiz Generation      | (inline/configured)                           | TBD         | TBD                | TBD              |
+| Community Summary    | (inline/configured)                           | TBD         | TBD                | TBD              |
+
+TÖi li?u tham kh?o: Google AI (2024) "Gemini API Documentation".
