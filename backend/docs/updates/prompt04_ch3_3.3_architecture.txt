@@ -1,0 +1,42 @@
+### 3.3. Ki?n tr£c t?ng th? h? th?ng
+
+H? th?ng ?? xu?t l? trçnh h?c t?p c† nhÉn h¢a ???c xÉy d?ng theo mì hçnh ki?n tr£c 3 l?p hi?n ??i g?m:
+- T?ng giao di?n (Frontend): Next.js 14 (React) xÉy d?ng ?ng d?ng web chu?n, h? tr? giao di?n h?i tho?i ?a l??t, visualize l? trçnh h?c, dashboard monitoring.
+  C?u tr£c th? m?c: /frontend/app/, /frontend/components/ (PathVisualizer, ChatInterface), /frontend/lib/api.ts.
+  K?t n?i v?i backend qua RESTful API (JSON).
+- T?ng x? lÏ logic (Backend Python): FastAPI (Python 3.9), t°ch h?p Gemini API, LlamaIndex, Neo4j driver, TensorFlow/PyTorch cho DKT model, pm4py cho process mining.
+  Module ch°nh: api.py, adaptive_path_planner.py, hybrid_retriever.py, knowledge_tracing.py, graph_recommender.py, explainability.py, process_mining.py, neo4j_manager.py, evaluation_metrics.py, learner_state.py, learner_profile_manager.py.
+  C?u tr£c r‰ rÖng: /backend/src/
+  S? d?ng Uvicorn ASGI, background threads cho lifecycle (init Neo4j/Gemini).
+- T?ng d? li?u (Database + Indexing): Neo4j AuraDB cloud, LlamaIndex (vector+property graph adapter).
+  Nodes: KnowledgeNode, Student, LearningData (h? s? & d? li?u h?c t?p).
+  Relationships: REQUIRES, NEXT, IS_PREREQUISITE_OF, etc. v?i weight & dependency.
+  Constraints/Indexes ???c setup qua script neo4j_schema_setup.py.
+  LlamaIndex h? tr? PropertyGraphIndex, VectorStoreIndex cho semantic queries.
+
+Lu?ng d? li?u ch°nh:
+1. Kh?i t?o Knowledge Graph: SPR Generator/Validation ? CSV ? Import vÖo Neo4j ? Index/Constraint.
+2. Sinh l? trçnh h?c t?p: Frontend g?i input; Backend l?y profile, DKT predict mastery; Hybrid retriever l?y context; Adaptive planner/A*+RL sinh l? trçnh t?i ?u; GNN recommender fine-tune; Explainability gi?i th°ch l? trçnh; Frontend visualize.
+3. Sinh n?i dung h?c t?p/?†nh gi†: Backend sinh content vÖ quiz v?i Gemini API; c?p nh?t h? s? h?c viàn; process mining phÉn t°ch learning logs.
+
+Deployment:
+- Dev: API backend t?i localhost:8000, frontend t?i :3000, Neo4j AuraDB cloud.
+- Prod (future): Docker/Kubernetes, Vercel/Netlify (frontend), Neo4j AuraDB prod tier.
+
+API Endpoints m?u
+| Endpoint              | Method | Mì t?                     |
+|-----------------------|--------|---------------------------|
+| /api/status           | GET    | Health check/api status   |
+| /api/generate_path    | POST   | Sinh l? trçnh h?c t?p     |
+| /api/recommend_next   | POST   | ?? xu?t concept ti?p theo |
+| /api/generate_content | POST   | Sinh n?i dung bÖi h?c     |
+| /api/generate_quiz    | POST   | Sinh bÖi ki?m tra         |
+| /api/explain_path     | POST   | Gi?i th°ch l? trçnh       |
+| /api/update_profile   | PUT    | C?p nh?t profile h?c viàn |
+
+S? ?? ?? xu?t:
+- S? ?? C4: Context ? Container ? Component
+- Sequence diagram: Learning path flow
+- Deployment diagram: Dev/Prod
+
+B?ng ?? xu?t: So s†nh cìng ngh? t?ng l?p (Next.js, FastAPI, Neo4j AuraDB, Gemini API), API ?†p ?ng, performance.

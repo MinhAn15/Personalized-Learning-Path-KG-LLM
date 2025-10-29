@@ -1,0 +1,8 @@
+### B?ng so s nh c“ng ngh? c c l?p
+
+| Technology   | Layer     | Strengths                                                                 | Trade-offs                                               | Performance/Scale                                      | Notes |
+|--------------|-----------|---------------------------------------------------------------------------|----------------------------------------------------------|--------------------------------------------------------|-------|
+| Next.js 14   | Frontend  | React ecosystem, server components, routing, SSR/SSG, great DX            | Requires Node tooling; SSR adds infra complexity         | Handles modern SPA/SSR at scale with CDN/edge support  | Fits chat UI + visualization |
+| FastAPI      | Backend   | High performance (uvicorn), async I/O, OpenAPI docs, type hints           | Async patterns require care; background tasks are basic   | Good throughput/latency for REST microservices         | Simple to deploy; great dev experience |
+| Neo4j AuraDB | Data/KG   | Managed graph DB, Cypher, indexes/constraints, scalability, reliability   | Cloud cost; graph modeling learning curve                 | Scales for KG queries; low-latency managed service     | Good for prerequisites and path traversal |
+| Gemini API   | GenAI     | Multimodal LLM, strong generation quality, flexible prompting             | Token cost; rate limits; requires prompt governance       | Scales via managed API; latency depends on model class | Use with retrieval grounding + safety filters |
