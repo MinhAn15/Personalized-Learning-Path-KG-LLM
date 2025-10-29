@@ -1,0 +1,387 @@
+## PH? L?C C: PROMPT TEMPLATES V∑ CODE SAMPLES
+
+### C.1. SPR Generator Prompt (T¢m t?t)
+
+File ??y ??: prompts/spr_generator_prompt.txt (44,000 kÏ t?)
+
+M?c ?°ch: Tr°ch xu?t concepts, relationships t? tÖi li?u h?c thu?t thÖnh nodes.csv, relationships.csv.
+
+C?u tr£c ch°nh:
+1. Control Parameters: temperature=0.1, seed=42, top-k=5, top-p=0.3
+2. Layer 1: Core Concept Extraction (Sanitized_Concept, Definition, Example, Learning_Objective)
+3. Layer 2: Contextual Data (Context, Skill_Level, Difficulty, Priority, Time_Estimate, Semantic_Tags x20, Focused_Tags x3-5)
+4. Layer 3: Enhanced Properties (Real_World_Application, Common_Errors, Learning_Style_Preference)
+
+Output Format: CSV v?i double quotes, semicolon-separated tags.
+
+---
+
+### C.2. SPR Validation Prompt (T¢m t?t)
+
+File ??y ??: prompts/spr_validation_prompt.txt (10,000 kÏ t?)
+
+M?c ?°ch: Validate, correct extracted data theo original document.
+
+Validation Steps:
+1. Node Validation: Check DocumentID, NodeID format, Skill_Level (Bloom's Taxonomy), Difficulty range (1-5), Tags count
+2. Relationship Validation: Check Source/Target exist, RelationshipType valid, Weight/Dependency (1-5)
+3. Cross-Validation: Prerequisites consistency, Bidirectionality check
+
+Output: Corrected CSVs + error report.
+
+---
+
+### C.3. Content Generation Prompt Template
+
+You are an expert educational content creator with deep knowledge in {domain}.
+
+Generate comprehensive learning content for:
+
+Concept: {sanitized_concept}
+Definition: {definition}
+Context: {context}
+Student Profile:
+
+Skill Level: {skill_level}
+
+Learning Style: {learning_style} (VARK)
+
+Prior Knowledge: {prerequisites}
+Time Constraint: {time_estimate} minutes
+
+Requirements:
+
+Adapt to {learning_style} learners:
+
+- Visual: diagrams, flowcharts, visual examples
+- Auditory: conversational tone, discussion prompts
+- Reading/Writing: detailed explanations, written exercises
+- Kinesthetic: hands-on activities, interactive examples
+
+Structure:
+
+- Introduction (10%): motivate, relate to prior knowledge
+- Core Content (70%): detailed explanation + examples
+- Practice (15%): exercises matching skill level
+- Summary (5%): key takeaways
+
+Include real-world applications, common errors, mastery tips
+
+Output Format: Markdown (500-1000 words)
+
+Generate the lesson content:
+
+text
+
+---
+
+### C.4. Quiz Generation Prompt Template
+
+Generate a 20-question multiple-choice quiz on:
+
+Concept: {sanitized_concept}
+Definition: {definition}
+Student Level: {skill_level}
+Difficulty: {difficulty}
+
+Requirements:
+
+- Distribution: 40% basic, 30% intermediate, 30% advanced
+- 4 options per question (A, B, C, D)
+- Exactly 1 correct answer
+- Distractors plausible but clearly wrong
+- Include brief explanations for correct answers
+
+Output Format: JSON array
+
+```json
+[
+  {
+    "question": "...",
+    "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
+    "correct_answer": "B",
+    "explanation": "..."
+  }
+]
+```
+
+Generate 20 questions:
+
+text
+
+---
+
+### C.5. 10 GitHub Copilot Prompts (T¢m t?t)
+
+1. Deep Knowledge Tracing: Implement SAKT model, predict mastery, update Neo4j
+2. Reinforcement Learning: PPO/DQN agent, hybrid A*+RL planner
+3. GraphRAG Retriever: Community detection, hybrid retrieval router
+4. Process Mining: Analyze logs v?i pm4py, conformance checking
+5. Hybrid Path Planning: A*+RL k?t h?p, dynamic weight computation
+6. GNN Recommender: GCN+GAT model, student-concept prediction
+7. SPR Prompt Enhancement: Layer 1/2/3 refinement, JSON validation
+8. Explainability Module: Generate explanations, counterfactuals
+9. Multi-turn Dialogue: Conversational interface, context management
+10. Evaluation Framework: Metrics pipeline, A/B testing infrastructure
+
+---
+
+### C.6. Key Code Samples
+
+C.6.1. Neo4j Connection Manager
+
+```python
+from neo4j import GraphDatabase
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+class Neo4jManager:
+    def __init__(self):
+        self.driver = GraphDatabase.driver(
+            os.getenv("NEO4J_URL"),
+            auth=(os.getenv("NEO4J_USER"), os.getenv("NEO4J_PASSWORD"))
+        )
+
+    def execute_read(self, query, params=None):
+        with self.driver.session() as session:
+            result = session.run(query, params or {})
+            return [record.data() for record in result]
+
+    def execute_write(self, query, params=None):
+        with self.driver.session() as session:
+            result = session.run(query, params or {})
+            return result.single()
+
+    def close(self):
+        self.driver.close()
+```
+
+C.6.2. Gemini API Client
+
+```python
+import google.generativeai as genai
+import os
+
+class GeminiClient:
+    def __init__(self, model_name: str = "gemini-1.5-pro"):
+        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+        self.model = genai.GenerativeModel(model_name)
+
+    def generate_content(self, prompt: str, temperature: float = 0.7, max_tokens: int = 8192) -> str:
+        response = self.model.generate_content(
+            prompt,
+            generation_config={
+                'temperature': temperature,
+                'top_p': 0.95,
+                'max_output_tokens': max_tokens,
+            }
+        )
+        return getattr(response, 'text', str(response))
+
+    def generate_with_retry(self, prompt: str, max_retries: int = 3) -> str:
+        import time
+        for attempt in range(max_retries):
+            try:
+                return self.generate_content(prompt)
+            except Exception:
+                if attempt == max_retries - 1:
+                    raise
+                time.sleep(2 ** attempt)  # Exponential backoff
+```
+
+C.6.3. A* Custom Algorithm (snippet)
+
+```python
+import heapq
+from typing import Dict, List, Tuple, Any
+
+
+def a_star_custom(start_node: str, goal_node: str, learner_id: str, neo4j_client) -> List[str]:
+    open_set: List[Tuple[float, str]] = [(0.0, start_node)]
+    came_from: Dict[str, str] = {}
+    g_score: Dict[str, float] = {start_node: 0.0}
+
+    while open_set:
+        _, current = heapq.heappop(open_set)
+        if current == goal_node:
+            return reconstruct_path(came_from, current)
+
+        neighbors = get_neighbors(current, neo4j_client)
+        for neighbor in neighbors:
+            tentative_g = g_score[current] + cost(current, neighbor)
+            if neighbor not in g_score or tentative_g < g_score[neighbor]:
+                came_from[neighbor] = current
+                g_score[neighbor] = tentative_g
+                f_score = tentative_g + heuristic(neighbor, goal_node, learner_id)
+                heapq.heappush(open_set, (f_score, neighbor))
+
+    return []  # No path found
+
+
+def reconstruct_path(came_from: Dict[str, str], current: str) -> List[str]:
+    path = [current]
+    while current in came_from:
+        current = came_from[current]
+        path.append(current)
+    return list(reversed(path))
+
+
+def get_neighbors(node: str, neo4j_client) -> List[str]:
+    # placeholder: query Neo4j for neighbors
+    return []
+
+
+def cost(a: str, b: str) -> float:
+    # placeholder: edge weight/cost
+    return 1.0
+
+
+def heuristic(node: str, goal: str, learner_id: str) -> float:
+    # placeholder: similarity, difficulty, time factors
+    similarity = 0.5
+    difficulty_factor = 0.3
+    time_factor = 0.2
+    return (1 - similarity) + 0.3 * difficulty_factor + 0.2 * time_factor
+```
+
+C.6.4. FastAPI Endpoint Example
+
+```python
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class PathRequest(BaseModel):
+    student_id: str
+    goal: str
+    learning_style: str = "visual"
+    time_constraint: int = 300  # minutes
+
+@app.post("/api/generate_path")
+async def generate_path(request: PathRequest):
+    try:
+        start_node = determine_start_node(request.student_id)
+        goal_node = determine_goal_node(request.goal)
+
+        path = adaptive_path_planner.plan_path(
+            learner_id=request.student_id,
+            start_node=start_node,
+            goal_node=goal_node
+        )
+
+        explanation = explainability.explain_path(path, request.student_id)
+
+        return {
+            "path": path,
+            "explanation": explanation,
+            "estimated_time": sum(node.get("Time_Estimate", 0) for node in path)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+```
+
+---
+
+### C.7. Environment Setup Scripts
+
+C.7.1. Backend Setup (PowerShell)
+
+```powershell
+# scripts/setup_backend.ps1
+python -m venv .venv
+& .venv\Scripts\Activate.ps1
+pip install -r backend/requirements.txt
+& .venv\Scripts\python.exe backend/scripts/neo4j_schema_setup.py
+Write-Host "Backend setup complete!" -ForegroundColor Green
+```
+
+C.7.2. Frontend Setup (Bash)
+
+```bash
+# scripts/setup_frontend.sh
+cd frontend
+npm install
+echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
+echo "Frontend setup complete!"
+```
+
+---
+
+### C.8. Cypher Query Examples
+
+C.8.1. Shortest Learning Path
+
+```cypher
+MATCH (start:KnowledgeNode {Node_ID: $start_node_id})
+MATCH (goal:KnowledgeNode {Node_ID: $goal_node_id})
+MATCH path = shortestPath((start)-[:NEXT|REQUIRES*1..10]->(goal))
+RETURN path,
+       [node IN nodes(path) | node.Sanitized_Concept] AS concepts,
+       reduce(total = 0, rel IN relationships(path) | total + coalesce(rel.Weight, 1)) AS total_cost
+```
+
+C.8.2. Get Student Learning History
+
+```cypher
+MATCH (s:Student {StudentID: $student_id})-[:LEARNED]->(ld:LearningData)-[:FOR_CONCEPT]->(c:KnowledgeNode)
+WHERE ld.timestamp > datetime($start_date)
+RETURN c.Sanitized_Concept AS concept,
+       ld.mastery_level AS mastery,
+       ld.performance_score AS score,
+       ld.timestamp AS learned_at
+ORDER BY ld.timestamp DESC
+LIMIT 20
+```
+
+C.8.3. Find Similar Concepts
+
+```cypher
+MATCH (c1:KnowledgeNode {Node_ID: $concept_id})
+MATCH (c2:KnowledgeNode)
+WHERE c1 <> c2
+WITH c1, c2,
+     [tag IN split(c1.Semantic_Tags, ';') WHERE tag IN split(c2.Semantic_Tags, ';')] AS common_tags,
+     split(c1.Semantic_Tags, ';') AS tags1,
+     split(c2.Semantic_Tags, ';') AS tags2
+WITH c2,
+     size(common_tags) * 1.0 / (size(tags1) + size(tags2) - size(common_tags)) AS jaccard_sim
+WHERE jaccard_sim > 0.3
+RETURN c2.Sanitized_Concept AS similar_concept,
+       jaccard_sim AS similarity
+ORDER BY jaccard_sim DESC
+LIMIT 10
+```
+
+---
+
+### C.9. Workflow Diagrams (Text Description)
+
+Workflow Kh?i t?o Knowledge Graph:
+1. Upload document (PDF/DOCX)
+2. Call Gemini API v?i SPR Generator prompt ? Extract concepts, relationships ? nodes.csv, relationships.csv
+3. Call Gemini API v?i SPR Validation prompt ? Validate, correct data
+4. Import vÖo Neo4j AuraDB
+5. Create indexes, constraints
+
+Workflow Sinh L? Trçnh H?c T?p:
+1. Frontend g?i request (student_id, goal, learning_style, time_constraint)
+2. Backend retrieve student profile t? Neo4j
+3. DKT model predict knowledge state (mastery cho m?i concept)
+4. Hybrid Retriever (GraphRAG) l?y context liàn quan
+5. Adaptive Path Planner (A* + RL) sinh optimal path
+6. GNN Recommender fine-tune next concept selection
+7. Explainability module generate explanation
+8. Return path + explanation + estimated time
+
+---
+
+### C.10. Debugging Tips
+
+- Neo4j Connection Issues: Verify NEO4J_URL, credentials; test trong Neo4j Browser
+- Gemini API Errors: Check GEMINI_API_KEY valid; verify API quota
+- FastAPI Startup: Run uvicorn ? foreground ?? xem logs chi ti?t; check dependencies load
+- GNN Model: Verify input feature dimensions match model; check training data shape
+- Process Mining: Ensure event logs c¢ ?? columns (activity, timestamp); filter outliers tr??c
