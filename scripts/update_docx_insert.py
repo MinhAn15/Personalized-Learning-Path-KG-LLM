@@ -208,11 +208,17 @@ def _insert_structured_after_anchor(doc: Document, text: str, anchor: str, occur
                 hdr = t.add_row().cells
                 for j in range(cols):
                     hdr[j].text = rows[0][j]
+                    for p in hdr[j].paragraphs:
+                        for run in p.runs:
+                            run.font.name = SAFE_FONT
                 # data
                 for data_row in rows[1:]:
                     cells = t.add_row().cells
                     for j in range(cols):
                         cells[j].text = data_row[j] if j < len(data_row) else ""
+                        for p in cells[j].paragraphs:
+                            for run in p.runs:
+                                run.font.name = SAFE_FONT
             else:
                 p = doc.add_paragraph()
                 r = p.add_run(payload)
@@ -284,10 +290,16 @@ def _insert_structured_after_anchor(doc: Document, text: str, anchor: str, occur
             hdr = t.add_row().cells
             for j in range(cols):
                 hdr[j].text = rows[0][j]
+                for p in hdr[j].paragraphs:
+                    for run in p.runs:
+                        run.font.name = SAFE_FONT
             for data_row in rows[1:]:
                 cells = t.add_row().cells
                 for j in range(cols):
                     cells[j].text = data_row[j] if j < len(data_row) else ""
+                    for p in cells[j].paragraphs:
+                        for run in p.runs:
+                            run.font.name = SAFE_FONT
             after_elem.addnext(t._element)
             after_elem = t._element
         else:
